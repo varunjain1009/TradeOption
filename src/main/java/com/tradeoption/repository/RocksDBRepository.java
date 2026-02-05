@@ -18,18 +18,17 @@ import java.nio.charset.StandardCharsets;
 public class RocksDBRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(RocksDBRepository.class);
-    private static final String DB_FILE = "trade-option-db";
-
-    // Static load of the library
-    static {
-        RocksDB.loadLibrary();
-    }
-
+    private final String dbFile;
     private RocksDB db;
     private final ObjectMapper objectMapper;
 
     public RocksDBRepository(ObjectMapper objectMapper) {
+        this(objectMapper, "trade-option-db");
+    }
+
+    public RocksDBRepository(ObjectMapper objectMapper, String dbFile) {
         this.objectMapper = objectMapper;
+        this.dbFile = dbFile;
     }
 
     @PostConstruct
@@ -38,8 +37,8 @@ public class RocksDBRepository {
         options.setCreateIfMissing(true);
         try {
             // Ensure directory exists if path is deeper, but here likely just local folder
-            db = RocksDB.open(options, DB_FILE);
-            logger.info("RocksDB initialized at: {}", DB_FILE);
+            db = RocksDB.open(options, dbFile);
+            logger.info("RocksDB initialized at: {}", dbFile);
         } catch (RocksDBException e) {
             logger.error("Error initializing RocksDB", e);
             throw new RuntimeException("Failed to initialize RocksDB", e);
