@@ -1,0 +1,610 @@
+1. SYSTEM OVERVIEW
+Objective
+
+Build a desktop-first, institutional-grade MCX options analytics platform that:
+
+Fetches live MCX option chain data
+
+Allows multi-leg option strategies (buy/sell, re-entry, exits)
+
+Computes exact PNL, Greeks, PoP, volatility cone
+
+Displays animated payoff & live T-0 PNL
+
+Persists all data using RocksDB (No SQL)
+
+Runs as a self-contained Electron desktop app
+
+Uses Spring Boot + WebSockets for real-time updates
+
+Entire system lives inside one movable folder
+
+2. NON-FUNCTIONAL REQUIREMENTS
+
+❌ No SQL databases
+
+✅ RocksDB only
+
+❌ No cloud dependency
+
+✅ Fully local execution
+
+❌ Browser-only solution
+
+✅ Electron desktop app
+
+✅ Low-latency live updates (<1s)
+
+✅ Deterministic financial math
+
+✅ Folder portability (no absolute paths)
+
+🧩 EPIC 1 — BACKEND CORE (SPRING BOOT)
+STORY 1.1 — Spring Boot Application Bootstrap
+
+Story Name:
+BOOTSTRAP_BACKEND_SPRING
+
+Description
+
+Create a Spring Boot application that serves as the single backend service responsible for:
+
+MCX API proxying
+
+Pricing & analytics
+
+Persistence
+
+WebSocket broadcasting
+
+The backend must start cleanly with a single command and run independently of the frontend.
+
+Tools / Tech
+
+Java 17
+
+Spring Boot 3.x
+
+Maven
+
+Embedded Tomcat
+
+Acceptance Criteria
+
+Application starts on configurable port
+
+Health endpoint available
+
+No external service dependency
+
+Runs from within project folder
+
+STORY 1.2 — MCX API Proxy Service
+
+Story Name:
+MCX_API_PROXY
+
+Description
+
+Implement a service that replicates MCX browser calls:
+
+GetOptionChain
+
+GetOptionChainStrikePrice
+
+The service must:
+
+Inject headers & cookies exactly
+
+Avoid CORS/browser restrictions
+
+Abstract MCX API from frontend
+
+Tools / Tech
+
+Spring RestTemplate / WebClient
+
+Config-based headers
+
+JSON parsing (Jackson)
+
+Acceptance Criteria
+
+Correct MCX response payload returned
+
+Supports commodity & expiry selection
+
+Handles MCX downtime gracefully
+
+STORY 1.3 — Pricing & PNL Engine
+
+Story Name:
+OPTION_PNL_ENGINE
+
+Description
+
+Implement exact PNL math matching trading desk standards.
+
+Must support:
+
+CE/PE Buy & Sell
+
+Multiple lots
+
+Multiple entries per strike
+
+Partial exits
+
+Strategy-level aggregation
+
+Tools / Tech
+
+Java math (double with care)
+
+Domain models (Position, OptionLeg)
+
+Acceptance Criteria
+
+Expiry PNL curve matches reference image
+
+Flat max loss zones
+
+Correct breakevens
+
+Strategy PNL equals sum of legs
+
+STORY 1.4 — T-0 (Live) PNL Engine
+
+Story Name:
+LIVE_T0_PNL_CALCULATION
+
+Description
+
+Calculate real-time PNL using:
+
+Live option LTP
+
+Entry prices
+
+Direction (buy/sell)
+
+Must NOT use intrinsic value.
+
+Tools / Tech
+
+MCX strike price API
+
+Scheduled recalculation
+
+Acceptance Criteria
+
+Live PNL updates every second
+
+Correct sign for buy/sell
+
+Matches real broker PNL behavior
+
+📊 EPIC 2 — GREEKS & QUANTS
+STORY 2.1 — Black-Scholes Pricing Engine
+
+Story Name:
+BLACK_SCHOLES_ENGINE
+
+Description
+
+Implement Black-Scholes model to:
+
+Price CE/PE options
+
+Reverse-calculate implied volatility
+
+Tools / Tech
+
+Java math
+
+Normal distribution approximation
+
+Acceptance Criteria
+
+Prices converge with MCX values
+
+Stable for deep ITM/OTM
+
+No NaN explosions
+
+STORY 2.2 — Greeks Calculation Service
+
+Story Name:
+OPTION_GREEKS_ENGINE
+
+Description
+
+Compute:
+
+Delta
+
+Theta (daily decay)
+
+Aggregate Greeks at:
+
+Leg level
+
+Strategy level
+
+Tools / Tech
+
+Black-Scholes formulas
+
+Scheduled time decay
+
+Acceptance Criteria
+
+Delta sign correct
+
+Theta negative for long options
+
+Net Greeks update live
+
+STORY 2.3 — Greeks Animation Feed
+
+Story Name:
+GREEKS_LIVE_STREAM
+
+Description
+
+Continuously stream Greeks over WebSockets so frontend can animate:
+
+Delta drift
+
+Theta burn
+
+Tools / Tech
+
+Spring WebSockets
+
+Scheduled broadcasters
+
+Acceptance Criteria
+
+Smooth per-second updates
+
+No UI freezing
+
+Accurate decay over time
+
+📈 EPIC 3 — PROBABILITY & VOLATILITY
+STORY 3.1 — Probability of Profit Engine
+
+Story Name:
+PROBABILITY_OF_PROFIT_ENGINE
+
+Description
+
+Calculate Probability of Profit using lognormal price distribution:
+
+Uses volatility
+
+Uses breakevens
+
+Uses time to expiry
+
+Tools / Tech
+
+Statistical math
+
+Normal CDF
+
+Acceptance Criteria
+
+PoP similar to industry tools
+
+Matches reference (~38–40%)
+
+Stable across strikes
+
+STORY 3.2 — Volatility Cone Generator
+
+Story Name:
+VOLATILITY_CONE_ENGINE
+
+Description
+
+Generate volatility cone using:
+
+Historical or implied volatility
+
+1σ and 2σ price ranges
+
+Tools / Tech
+
+Exponential price bounds
+
+Time-weighted volatility
+
+Acceptance Criteria
+
+Correct cone widening with time
+
+Overlay-ready output
+
+Consistent with IV levels
+
+🗄 EPIC 4 — PERSISTENCE (ROCKSDB)
+STORY 4.1 — RocksDB Integration
+
+Story Name:
+ROCKSDB_PERSISTENCE_LAYER
+
+Description
+
+Integrate RocksDB as the only persistence layer for:
+
+Positions
+
+Entries & exits
+
+Historical PNL
+
+Greeks history
+
+Tools / Tech
+
+RocksDB Java API
+
+Binary serialization
+
+Acceptance Criteria
+
+Data survives restart
+
+Fast read/write
+
+No SQL usage anywhere
+
+STORY 4.2 — Historical Analytics Store
+
+Story Name:
+HISTORICAL_PNL_STORAGE
+
+Description
+
+Persist time-series:
+
+PNL snapshots
+
+Greeks snapshots
+
+Used for historical charts.
+
+Tools / Tech
+
+RocksDB key ranges
+
+Timestamp indexing
+
+Acceptance Criteria
+
+Accurate historical graphs
+
+Efficient retrieval
+
+No memory leaks
+
+🌐 EPIC 5 — REAL-TIME COMMUNICATION
+STORY 5.1 — WebSocket Infrastructure
+
+Story Name:
+WEBSOCKET_LIVE_UPDATES
+
+Description
+
+Provide WebSocket endpoints for:
+
+Live PNL
+
+Spot price
+
+Greeks
+
+Volatility
+
+Tools / Tech
+
+Spring WebSocket + STOMP
+
+Acceptance Criteria
+
+Clients auto-reconnect
+
+Broadcast frequency configurable
+
+No blocking calls
+
+🎨 EPIC 6 — FRONTEND (HTML5)
+STORY 6.1 — Strategy Builder UI
+
+Story Name:
+OPTION_STRATEGY_BUILDER_UI
+
+Description
+
+Enable users to:
+
+Select commodity, expiry
+
+Add/remove option legs
+
+Buy/Sell CE/PE
+
+Re-enter same strike at different prices
+
+Update exits
+
+Tools / Tech
+
+HTML5
+
+Vanilla JS
+
+JSON file-based dropdowns
+
+Acceptance Criteria
+
+Unlimited legs
+
+Correct PNL reflection
+
+No reload required
+
+STORY 6.2 — Animated Payoff Graph
+
+Story Name:
+ANIMATED_PAYOUT_GRAPH
+
+Description
+
+Render:
+
+Expiry PNL curve
+
+Live T-0 PNL curve
+
+Spot price marker
+
+Volatility cone overlay
+
+Tools / Tech
+
+Chart.js / Canvas
+
+Animation frames
+
+Acceptance Criteria
+
+Smooth animation
+
+Clear breakevens
+
+Matches reference visual
+
+STORY 6.3 — Greeks & Metrics Panel
+
+Story Name:
+LIVE_GREEKS_DASHBOARD
+
+Description
+
+Display:
+
+Delta
+
+Theta
+
+Max profit/loss
+
+Risk-reward
+
+PoP %
+
+Tools / Tech
+
+WebSocket subscription
+
+Reactive UI updates
+
+Acceptance Criteria
+
+Updates every second
+
+Zero refresh required
+
+No lag spikes
+
+🖥 EPIC 7 — ELECTRON DESKTOP
+STORY 7.1 — Electron App Wrapper
+
+Story Name:
+ELECTRON_DESKTOP_APP
+
+Description
+
+Wrap frontend + backend into a desktop app that:
+
+Launches Spring Boot backend
+
+Loads frontend UI
+
+Runs cross-platform
+
+Tools / Tech
+
+Electron
+
+Node.js
+
+Acceptance Criteria
+
+Single-click startup
+
+No browser needed
+
+App closes cleanly
+
+⚙️ EPIC 8 — DEVOPS & OPERABILITY
+STORY 8.1 — Single-Folder Deployment
+
+Story Name:
+PORTABLE_SINGLE_FOLDER_SETUP
+
+Description
+
+Ensure entire system:
+
+Runs from one root folder
+
+No absolute paths
+
+Configurable via files
+
+Tools / Tech
+
+Relative paths
+
+External config JSON
+
+Acceptance Criteria
+
+Zip & unzip works
+
+No hard-coded paths
+
+Same behavior everywhere
+
+STORY 8.2 — Configuration Management
+
+Story Name:
+FILE_BASED_CONFIGURATION
+
+Description
+
+Support config via JSON:
+
+Lot sizes
+
+Bid-ask constraints
+
+Refresh intervals
+
+Risk-free rate
+
+Tools / Tech
+
+JSON parsing
+
+Hot reload optional
+
+Acceptance Criteria
+
+No recompilation needed
+
+Config changes reflected live

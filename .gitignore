@@ -1,0 +1,148 @@
+############################################
+# OS / SYSTEM FILES
+############################################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+############################################
+# IDEs & EDITORS
+############################################
+
+# IntelliJ / JetBrains
+.idea/
+*.iml
+out/
+
+# VS Code
+.vscode/
+.history/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# NetBeans
+nbproject/
+nbbuild/
+dist/
+nbdist/
+
+############################################
+# JAVA / SPRING BOOT
+############################################
+*.class
+*.log
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# Spring Boot runtime
+spring-boot.pid
+application-local.yml
+application-dev.yml
+
+############################################
+# NODE / ELECTRON
+############################################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Electron build output
+dist/
+out/
+build/
+
+############################################
+# FRONTEND BUILD ARTIFACTS
+############################################
+frontend/dist/
+frontend/.cache/
+frontend/.parcel-cache/
+
+############################################
+# ROCKSDB (NO SQL DATA)
+############################################
+rocksdb/
+*.sst
+*.log
+*.ldb
+*.manifest
+*.wal
+
+############################################
+# FILE-BASED DB / RUNTIME DATA
+############################################
+db/runtime/
+db/cache/
+db/temp/
+positions.backup.json
+
+############################################
+# ENV / SECRETS
+############################################
+.env
+.env.*
+*.keystore
+*.jks
+
+############################################
+# TEMP / RUNTIME FILES
+############################################
+*.tmp
+*.temp
+*.pid
+*.swp
+*.lock
+
+############################################
+# LOGS
+############################################
+logs/
+*.log.*
+
+############################################
+# TEST / COVERAGE
+############################################
+coverage/
+.nyc_output/
+jacoco.exec
+
+############################################
+# ARCHIVES & EXPORTS
+############################################
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.csv
+*.xlsx
+
+############################################
+# CI / DEVOPS
+############################################
+.github/workflows/*.log
+
+############################################
+# KEEP IMPORTANT CONFIG FILES
+############################################
+!db/config.json
+!db/lotSizes.json
+!db/instruments.json
+!db/expiries.json
+
