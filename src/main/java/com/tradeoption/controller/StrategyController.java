@@ -100,7 +100,25 @@ public class StrategyController {
                 order.getTradeAction());
         position.addEntry(entry);
 
-        // 3. Save
+        // 3. Update Status & Timestamp
+        position.setUpdatedTimestamp(System.currentTimeMillis());
+        // For a new trade (adding entry), status usually remains OPEN unless it was
+        // closed and we reopen?
+        // Or if we are adding to a position that nets to 0? (e.g. closing via trade
+        // endpoint)
+        if (position.getNetQuantity() == 0) {
+            position.setStatus(com.tradeoption.domain.PositionStatus.CLOSED);
+        } else {
+            // Check if it was matching against existing?
+            // Simple logic: If Net != 0, it's OPEN or PARTIAL.
+            // Distinguishing PARTIAL is hard without knowing "original" size.
+            // For now, if Net != 0, ensure it is OPEN (or PARTIALLY_CLOSED if we track max
+            // size).
+            // Let's stick to: If Net == 0 -> CLOSED. Else -> OPEN (active).
+            position.setStatus(com.tradeoption.domain.PositionStatus.OPEN);
+        }
+
+        // 4. Save
         positionRepository.save(position);
 
         // 4. Trigger Broadcast
@@ -137,6 +155,24 @@ public class StrategyController {
         entry.setLinkedEntryId(request.getLinkedEntryId());
 
         position.addEntry(entry);
+
+        position.setUpdatedTimestamp(System.currentTimeMillis());
+        int netQty = position.getNetQuantity();
+        if (netQty == 0) {
+            position.setStatus(com.tradeoption.domain.PositionStatus.CLOSED);
+        } else {
+            // Since we exited some amount but not all, it is PARTIALLY_CLOSED?
+            // "Partially Closed" usually implies we took some profits but still have open
+            // positions.
+            // If Net Quantity != 0, valid state.
+            // Let's mark as PARTIALLY_CLOSED for visibility if it was previously fully
+            // OPEN?
+            // Or just keep it simpler: OPEN = Active. CLOSED = Flat.
+            // Requirement says: Open / Closed / Partially Closed.
+            // We can say: If we added an exit entry, and Net != 0, it is PARTIALLY_CLOSED.
+            position.setStatus(com.tradeoption.domain.PositionStatus.PARTIALLY_CLOSED);
+        }
+
         positionRepository.save(position);
 
         dashboardBroadcaster.broadcastDashboardMetrics();

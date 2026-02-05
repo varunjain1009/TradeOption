@@ -9,6 +9,9 @@ public class Position {
     private String expiryDate;
     private double strikePrice;
     private LegType optionType;
+    private PositionStatus status = PositionStatus.OPEN;
+    private long createdTimestamp;
+    private long updatedTimestamp;
     private List<PositionEntry> entries = new ArrayList<>();
 
     public Position() {
@@ -20,6 +23,9 @@ public class Position {
         this.expiryDate = expiryDate;
         this.strikePrice = strikePrice;
         this.optionType = optionType;
+        this.status = PositionStatus.OPEN;
+        this.createdTimestamp = System.currentTimeMillis();
+        this.updatedTimestamp = this.createdTimestamp;
         this.id = generateId(symbol, expiryDate, strikePrice, optionType);
     }
 
@@ -106,5 +112,29 @@ public class Position {
 
     public void setEntries(List<PositionEntry> entries) {
         this.entries = entries;
+    }
+
+    public PositionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(PositionStatus status) {
+        this.status = status;
+    }
+
+    public long getCreatedTimestamp() {
+        return createdTimestamp;
+    }
+
+    public void setCreatedTimestamp(long createdTimestamp) {
+        this.createdTimestamp = createdTimestamp;
+    }
+
+    public long getUpdatedTimestamp() {
+        return updatedTimestamp;
+    }
+
+    public void setUpdatedTimestamp(long updatedTimestamp) {
+        this.updatedTimestamp = updatedTimestamp;
     }
 }
