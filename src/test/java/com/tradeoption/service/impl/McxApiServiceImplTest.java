@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -21,6 +22,9 @@ public class McxApiServiceImplTest {
 
     @Autowired
     private RestTemplate mcxRestTemplate;
+
+    @MockBean
+    private com.tradeoption.repository.RocksDBRepository rocksDBRepository;
 
     @Autowired
     private McxApiServiceImpl mcxApiService;

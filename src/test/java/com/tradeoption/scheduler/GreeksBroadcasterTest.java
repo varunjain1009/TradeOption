@@ -24,11 +24,14 @@ public class GreeksBroadcasterTest {
     @MockBean
     private SimpMessagingTemplate messagingTemplate;
 
+    @MockBean
+    private com.tradeoption.repository.RocksDBRepository rocksDBRepository;
+
     @Test
     public void testBroadcastGreeks() {
         // Setup Strategy
         Strategy strategy = new Strategy();
-        strategy.addLeg(new OptionLeg(100, LegType.CE, TradeAction.BUY, 10, 1));
+        strategy.addLeg(new OptionLeg(100, LegType.CE, TradeAction.BUY, 10, 1, "28MAR2024"));
 
         broadcaster.addStrategy(strategy);
 

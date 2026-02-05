@@ -19,7 +19,7 @@ public class LivePnlCalculatorTest {
     public void testCalculateLiveStrategyPnl_LongCall() {
         Strategy strategy = new Strategy();
         // Buy Call at 50, Qty 100
-        OptionLeg leg = new OptionLeg(10000, LegType.CE, TradeAction.BUY, 50, 100);
+        OptionLeg leg = new OptionLeg(10000, LegType.CE, TradeAction.BUY, 50, 100, "28MAR2024");
         strategy.addLeg(leg);
 
         Map<OptionLeg, Double> ltpMap = new HashMap<>();
@@ -34,7 +34,7 @@ public class LivePnlCalculatorTest {
     public void testCalculateLiveStrategyPnl_ShortPut() {
         Strategy strategy = new Strategy();
         // Sell Put at 40, Qty 100
-        OptionLeg leg = new OptionLeg(10000, LegType.PE, TradeAction.SELL, 40, 100);
+        OptionLeg leg = new OptionLeg(10000, LegType.PE, TradeAction.SELL, 40, 100, "28MAR2024");
         strategy.addLeg(leg);
 
         Map<OptionLeg, Double> ltpMap = new HashMap<>();
@@ -57,9 +57,9 @@ public class LivePnlCalculatorTest {
         Strategy strategy = new Strategy();
         // Bull Call Spread
         // Long Call 10000 CE @ 50
-        OptionLeg longLeg = new OptionLeg(10000, LegType.CE, TradeAction.BUY, 50, 100);
+        OptionLeg longLeg = new OptionLeg(10000, LegType.CE, TradeAction.BUY, 50, 100, "28MAR2024");
         // Short Call 10200 CE @ 20
-        OptionLeg shortLeg = new OptionLeg(10200, LegType.CE, TradeAction.SELL, 20, 100);
+        OptionLeg shortLeg = new OptionLeg(10200, LegType.CE, TradeAction.SELL, 20, 100, "28MAR2024");
 
         strategy.addLeg(longLeg);
         strategy.addLeg(shortLeg);

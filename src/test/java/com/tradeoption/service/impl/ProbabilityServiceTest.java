@@ -28,7 +28,7 @@ public class ProbabilityServiceTest {
 
         Strategy strategy = new Strategy();
         // Entry at 10.0
-        strategy.addLeg(new OptionLeg(100, LegType.CE, TradeAction.BUY, 10.0, 1));
+        strategy.addLeg(new OptionLeg(100, LegType.CE, TradeAction.BUY, 10.0, 1, "28MAR2024"));
 
         double spot = 100;
         double vol = 0.2;
@@ -63,7 +63,7 @@ public class ProbabilityServiceTest {
         // Profit if St < 95.
 
         Strategy strategy = new Strategy();
-        strategy.addLeg(new OptionLeg(100, LegType.PE, TradeAction.BUY, 5.0, 1));
+        strategy.addLeg(new OptionLeg(100, LegType.PE, TradeAction.BUY, 5.0, 1, "28MAR2024"));
 
         double spot = 100;
         double vol = 0.2;
@@ -92,10 +92,10 @@ public class ProbabilityServiceTest {
         // Large interval [88, 112] is profitable.
 
         Strategy strategy = new Strategy();
-        strategy.addLeg(new OptionLeg(90, LegType.PE, TradeAction.SELL, 2.0, 1));
-        strategy.addLeg(new OptionLeg(85, LegType.PE, TradeAction.BUY, 1.0, 1));
-        strategy.addLeg(new OptionLeg(110, LegType.CE, TradeAction.SELL, 2.0, 1));
-        strategy.addLeg(new OptionLeg(115, LegType.CE, TradeAction.BUY, 1.0, 1));
+        strategy.addLeg(new OptionLeg(90, LegType.PE, TradeAction.SELL, 2.0, 1, "28MAR2024"));
+        strategy.addLeg(new OptionLeg(85, LegType.PE, TradeAction.BUY, 1.0, 1, "28MAR2024"));
+        strategy.addLeg(new OptionLeg(110, LegType.CE, TradeAction.SELL, 2.0, 1, "28MAR2024"));
+        strategy.addLeg(new OptionLeg(115, LegType.CE, TradeAction.BUY, 1.0, 1, "28MAR2024"));
         // Net credit = +2 -1 +2 -1 = +2.
 
         // Put Spread: Max Loss if < 85. Max Profit if > 90.

@@ -6,13 +6,19 @@ public class OptionLeg {
     private TradeAction action;
     private double entryPrice;
     private int quantity;
+    private String expiryDate;
 
-    public OptionLeg(double strikePrice, LegType type, TradeAction action, double entryPrice, int quantity) {
+    public OptionLeg() {
+    }
+
+    public OptionLeg(double strikePrice, LegType type, TradeAction action, double entryPrice, int quantity,
+            String expiryDate) {
         this.strikePrice = strikePrice;
         this.type = type;
         this.action = action;
         this.entryPrice = entryPrice;
         this.quantity = quantity;
+        this.expiryDate = expiryDate;
     }
 
     public double getStrikePrice() {
@@ -33,5 +39,13 @@ public class OptionLeg {
 
     public int getQuantity() {
         return quantity;
+    }
+
+    public String getExpiryDate() {
+        return expiryDate;
+    }
+
+    public void setExpiryDate(String expiryDate) {
+        this.expiryDate = expiryDate;
     }
 }

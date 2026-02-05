@@ -24,6 +24,9 @@ public class McxProxyControllerTest {
     @MockBean
     private McxApiService mcxApiService;
 
+    @MockBean
+    private com.tradeoption.repository.RocksDBRepository rocksDBRepository;
+
     @Test
     public void testGetOptionChainEndpoint() throws Exception {
         String mockResponse = "{\"status\": \"ok\"}";

@@ -15,6 +15,16 @@ public class Strategy {
         this.id = id;
     }
 
+    private String symbol;
+
+    public String getSymbol() {
+        return symbol;
+    }
+
+    public void setSymbol(String symbol) {
+        this.symbol = symbol;
+    }
+
     public void addLeg(OptionLeg leg) {
         this.legs.add(leg);
     }

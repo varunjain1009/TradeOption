@@ -27,6 +27,12 @@ public class WebSocketIntegrationTest {
     @MockBean
     private SimpMessagingTemplate messagingTemplate;
 
+    @MockBean
+    private com.tradeoption.repository.PositionRepository positionRepository;
+
+    @MockBean
+    private com.tradeoption.repository.RocksDBRepository rocksDBRepository;
+
     @Test
     public void testMarketDataBroadcast() {
         marketDataBroadcaster.broadcastSpotPrice();

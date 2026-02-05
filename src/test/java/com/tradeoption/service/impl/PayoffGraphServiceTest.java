@@ -28,7 +28,7 @@ public class PayoffGraphServiceTest {
         // Assume simplified model where we buy at theoretical price or explicit entry
         // Let's set entry price to BS price approx for T=1, Vol=0.2, R=0.05
         // Price ~ 10.45
-        strategy.addLeg(new OptionLeg(100, LegType.CE, TradeAction.BUY, 10.45, 1));
+        strategy.addLeg(new OptionLeg(100, LegType.CE, TradeAction.BUY, 10.45, 1, "28MAR2024"));
 
         double spot = 100;
         double vol = 0.2;
