@@ -17,17 +17,20 @@ public class StrategyController {
     private final com.tradeoption.service.DashboardService dashboardService;
     private final com.tradeoption.service.MarketDataService marketDataService;
     private final com.tradeoption.service.SystemConfigService systemConfigService;
+    private final com.tradeoption.service.StrategySuggestionService strategySuggestionService;
 
     public StrategyController(com.tradeoption.scheduler.DashboardBroadcaster dashboardBroadcaster,
             com.tradeoption.repository.PositionRepository positionRepository,
             com.tradeoption.service.DashboardService dashboardService,
             com.tradeoption.service.MarketDataService marketDataService,
-            com.tradeoption.service.SystemConfigService systemConfigService) {
+            com.tradeoption.service.SystemConfigService systemConfigService,
+            com.tradeoption.service.StrategySuggestionService strategySuggestionService) {
         this.dashboardBroadcaster = dashboardBroadcaster;
         this.positionRepository = positionRepository;
         this.dashboardService = dashboardService;
         this.marketDataService = marketDataService;
         this.systemConfigService = systemConfigService;
+        this.strategySuggestionService = strategySuggestionService;
     }
 
     @PostMapping
@@ -219,5 +222,11 @@ public class StrategyController {
         com.tradeoption.domain.DashboardMetrics metrics = dashboardService.calculateMetrics(strategy, spot, vol, time,
                 rate);
         return ResponseEntity.ok(metrics);
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/suggest/straddle")
+    public ResponseEntity<Strategy> suggestStraddle(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "NIFTY") String symbol) {
+        return ResponseEntity.ok(strategySuggestionService.suggestStraddle(symbol));
     }
 }

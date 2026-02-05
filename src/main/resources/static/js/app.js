@@ -244,6 +244,59 @@ document.addEventListener('DOMContentLoaded', function () {
     connect();
 });
 
+function suggestStraddle() {
+    var symbol = document.getElementById('symbol').value;
+    fetch('/api/strategy/suggest/straddle?symbol=' + symbol)
+        .then(response => response.json())
+        .then(strategy => {
+            console.log('Suggested Strategy:', strategy);
+
+            // Clear current legs
+            var tbody = document.getElementById('legs-body');
+            tbody.innerHTML = '';
+
+            // Populate legs
+            strategy.legs.forEach(leg => {
+                var row = document.createElement('tr');
+                // Auto-map type/action similar to addLeg HTML structure
+                // Leg: { strikePrice, type, action, ... }
+                // Note: type is CE/PE, action is BUY/SELL
+
+                row.innerHTML = `
+                    <td style="padding: 5px;">
+                        <select class="leg-type" style="background: #333; color: white; border: 1px solid #555;">
+                            <option value="CE" ${leg.type === 'CE' ? 'selected' : ''}>CE</option>
+                            <option value="PE" ${leg.type === 'PE' ? 'selected' : ''}>PE</option>
+                        </select>
+                    </td>
+                    <td style="padding: 5px;">
+                        <select class="leg-action" style="background: #333; color: white; border: 1px solid #555;">
+                            <option value="BUY" ${leg.action === 'BUY' ? 'selected' : ''}>BUY</option>
+                            <option value="SELL" ${leg.action === 'SELL' ? 'selected' : ''}>SELL</option>
+                        </select>
+                    </td>
+                    <td style="padding: 5px;">
+                        <input type="number" class="leg-strike" value="${leg.strikePrice}" style="background: #333; color: white; border: 1px solid #555; width: 100px;">
+                    </td>
+                    <td style="padding: 5px;">
+                        <input type="number" class="leg-qty" value="${leg.quantity}" style="background: #333; color: white; border: 1px solid #555; width: 80px;">
+                    </td>
+                    <td style="padding: 5px;">
+                        <button onclick="this.parentElement.parentElement.remove()" style="background: #f44336; color: white; border: none; cursor: pointer;">X</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Set Expiry if matches
+            if (strategy.legs.length > 0 && strategy.legs[0].expiryDate) {
+                var expirySelect = document.getElementById('expiry');
+                expirySelect.value = strategy.legs[0].expiryDate;
+            }
+        })
+        .catch(err => console.error('Error suggesting straddle:', err));
+}
+
 function fetchPositions() {
     fetch('/api/strategy/positions')
         .then(response => response.json())
