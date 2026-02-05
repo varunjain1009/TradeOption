@@ -83,4 +83,55 @@ public class StrategySuggestionServiceImpl implements StrategySuggestionService 
         OptionLeg leg = new OptionLeg(strike, type, action, 0.0, 50, expiry);
         return leg;
     }
+
+    @Override
+    public Strategy suggestStrangle(String symbol) {
+        // 1. Get Spot Price
+        double spot = marketDataService.getLtp(symbol);
+        if (spot <= 0) {
+            spot = 22000.0;
+        }
+
+        // 2. Find ATM Strike (Round to nearest 50/100)
+        double strikeStep = "BANKNIFTY".equalsIgnoreCase(symbol) ? 100.0 : 50.0;
+        double atmStrike = Math.round(spot / strikeStep) * strikeStep;
+
+        // 3. Find Expiry
+        SystemConfig config = systemConfigService.getConfig();
+        String expiry = null;
+        if (config.getSymbolExpiries() != null && config.getSymbolExpiries().containsKey(symbol)) {
+            List<String> dates = config.getSymbolExpiries().get(symbol);
+            if (dates != null && !dates.isEmpty()) {
+                expiry = dates.get(0);
+            }
+        }
+        if (expiry == null)
+            expiry = "2024-03-28";
+
+        // 4. Construct Iron Condor (Strangle + Wings)
+        // Strangle Width: +/- 500 from ATM
+        // Wing Width: 200 further out
+        double strangleDist = "BANKNIFTY".equalsIgnoreCase(symbol) ? 1000.0 : 500.0;
+        double wingWidth = "BANKNIFTY".equalsIgnoreCase(symbol) ? 500.0 : 200.0;
+
+        double sellCallStrike = atmStrike + strangleDist;
+        double sellPutStrike = atmStrike - strangleDist;
+        double buyCallStrike = sellCallStrike + wingWidth;
+        double buyPutStrike = sellPutStrike - wingWidth;
+
+        Strategy strategy = new Strategy();
+        strategy.setSymbol(symbol);
+        strategy.setId("Suggested-Strangle-" + System.currentTimeMillis());
+
+        // Leg 1: Sell OTM CE
+        strategy.addLeg(createLeg(sellCallStrike, LegType.CE, TradeAction.SELL, expiry));
+        // Leg 2: Sell OTM PE
+        strategy.addLeg(createLeg(sellPutStrike, LegType.PE, TradeAction.SELL, expiry));
+        // Leg 3: Buy OTM CE Wing
+        strategy.addLeg(createLeg(buyCallStrike, LegType.CE, TradeAction.BUY, expiry));
+        // Leg 4: Buy OTM PE Wing
+        strategy.addLeg(createLeg(buyPutStrike, LegType.PE, TradeAction.BUY, expiry));
+
+        return strategy;
+    }
 }

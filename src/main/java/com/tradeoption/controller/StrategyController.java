@@ -229,4 +229,10 @@ public class StrategyController {
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "NIFTY") String symbol) {
         return ResponseEntity.ok(strategySuggestionService.suggestStraddle(symbol));
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/suggest/strangle")
+    public ResponseEntity<Strategy> suggestStrangle(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "NIFTY") String symbol) {
+        return ResponseEntity.ok(strategySuggestionService.suggestStrangle(symbol));
+    }
 }
