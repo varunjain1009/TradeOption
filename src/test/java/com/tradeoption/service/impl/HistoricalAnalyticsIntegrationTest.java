@@ -21,12 +21,13 @@ public class HistoricalAnalyticsIntegrationTest {
 
     private RocksDBRepository repository;
     private HistoricalAnalyticsServiceImpl service;
-    private static final String TEST_DB_FILE = "trade-option-db";
+    private String testDbFile;
 
     @BeforeEach
     public void setUp() {
-        FileSystemUtils.deleteRecursively(new File(TEST_DB_FILE));
-        repository = new RocksDBRepository(new ObjectMapper());
+        testDbFile = "trade-option-db-hist-" + UUID.randomUUID();
+        FileSystemUtils.deleteRecursively(new File(testDbFile));
+        repository = new RocksDBRepository(new ObjectMapper(), testDbFile);
         repository.init();
         service = new HistoricalAnalyticsServiceImpl(repository);
     }
@@ -34,7 +35,7 @@ public class HistoricalAnalyticsIntegrationTest {
     @AfterEach
     public void tearDown() {
         repository.close();
-        FileSystemUtils.deleteRecursively(new File(TEST_DB_FILE));
+        FileSystemUtils.deleteRecursively(new File(testDbFile));
     }
 
     @Test

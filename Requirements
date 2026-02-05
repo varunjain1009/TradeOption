@@ -926,4 +926,12 @@ Logged for transparency
 
 
 🧩 EPIC 12 — Implement Jacoco
-STORY 12.1 — Implement Jacoco and increase the unit test coverage to 90%
+STORY 12.1 — Implement Jacoco and increase the unit test coverage
+Description
+ Implement Jacoco and increase the unit test coverage to 90%
+ Also put a check in buiold that if code coverage is less than 90% the build fails
+Tools / Tech
+Jacoco
+Acceptance Criteria
+Unit test coverage >= 90%
+Build fails if code coverage is less than 90%

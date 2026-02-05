@@ -15,20 +15,21 @@ import static org.junit.jupiter.api.Assertions.*;
 public class RocksDBRepositoryTest {
 
     private RocksDBRepository repository;
-    private static final String TEST_DB_FILE = "trade-option-db";
+    private String testDbFile;
 
     @BeforeEach
     public void setUp() {
+        testDbFile = "trade-option-db-test-" + java.util.UUID.randomUUID();
         // Ensure clean slate
-        FileSystemUtils.deleteRecursively(new File(TEST_DB_FILE));
-        repository = new RocksDBRepository(new ObjectMapper());
+        FileSystemUtils.deleteRecursively(new File(testDbFile));
+        repository = new RocksDBRepository(new ObjectMapper(), testDbFile);
         repository.init();
     }
 
     @AfterEach
     public void tearDown() {
         repository.close();
-        FileSystemUtils.deleteRecursively(new File(TEST_DB_FILE));
+        FileSystemUtils.deleteRecursively(new File(testDbFile));
     }
 
     @Test
