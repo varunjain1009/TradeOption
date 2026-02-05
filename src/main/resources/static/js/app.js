@@ -99,19 +99,17 @@ function submitStrategy() {
         name: "Custom Strategy"
     };
 
-    fetch('/api/strategy', {
+    fetch('/api/strategy/analyze', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(strategy)
     })
-        .then(response => {
-            if (response.ok) {
-                console.log('Strategy submitted successfully');
-            } else {
-                console.error('Failed to submit strategy');
-            }
+        .then(response => response.json())
+        .then(metrics => {
+            console.log('Analysis received:', metrics);
+            updateDashboard(metrics);
         })
         .catch(error => console.error('Error:', error));
 }

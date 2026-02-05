@@ -14,11 +14,20 @@ public class StrategyController {
 
     private final com.tradeoption.scheduler.DashboardBroadcaster dashboardBroadcaster;
     private final com.tradeoption.repository.PositionRepository positionRepository;
+    private final com.tradeoption.service.DashboardService dashboardService;
+    private final com.tradeoption.service.MarketDataService marketDataService;
+    private final com.tradeoption.service.SystemConfigService systemConfigService;
 
     public StrategyController(com.tradeoption.scheduler.DashboardBroadcaster dashboardBroadcaster,
-            com.tradeoption.repository.PositionRepository positionRepository) {
+            com.tradeoption.repository.PositionRepository positionRepository,
+            com.tradeoption.service.DashboardService dashboardService,
+            com.tradeoption.service.MarketDataService marketDataService,
+            com.tradeoption.service.SystemConfigService systemConfigService) {
         this.dashboardBroadcaster = dashboardBroadcaster;
         this.positionRepository = positionRepository;
+        this.dashboardService = dashboardService;
+        this.marketDataService = marketDataService;
+        this.systemConfigService = systemConfigService;
     }
 
     @PostMapping
@@ -183,5 +192,32 @@ public class StrategyController {
     @org.springframework.web.bind.annotation.GetMapping("/positions")
     public ResponseEntity<java.util.List<com.tradeoption.domain.Position>> getPositions() {
         return ResponseEntity.ok(positionRepository.findAll());
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/analyze")
+    public ResponseEntity<com.tradeoption.domain.DashboardMetrics> analyzeStrategy(@RequestBody Strategy strategy) {
+        // 1. Fetch Market Data
+        double spot = 0.0;
+        if (strategy.getSymbol() != null) {
+            spot = marketDataService.getLtp(strategy.getSymbol());
+        }
+
+        // 2. Fetch Config
+        double rate = systemConfigService.getConfig().getRiskFreeRate();
+        double vol = 0.20; // Default or fetch per symbol
+
+        // 3. Time to expiry (approx 30 days if not set, or parse from leg)
+        // Need parsing logic. For now, mock 0.1 year
+        double time = 0.1;
+        if (!strategy.getLegs().isEmpty()) {
+            // Try to parse expiry from first leg
+            // com.tradeoption.domain.OptionLeg leg = strategy.getLegs().get(0);
+            // String expiry = leg.getExpiryDate();
+            // TODO: Implement date parsing
+        }
+
+        com.tradeoption.domain.DashboardMetrics metrics = dashboardService.calculateMetrics(strategy, spot, vol, time,
+                rate);
+        return ResponseEntity.ok(metrics);
     }
 }
