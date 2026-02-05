@@ -10,6 +10,8 @@ public class PositionEntry {
     private TradeAction action;
     private long timestamp;
 
+    private String linkedEntryId; // Optional: ID this entry is closing
+
     public PositionEntry() {
         // Default constructor for serialization
     }
@@ -60,5 +62,13 @@ public class PositionEntry {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getLinkedEntryId() {
+        return linkedEntryId;
+    }
+
+    public void setLinkedEntryId(String linkedEntryId) {
+        this.linkedEntryId = linkedEntryId;
     }
 }

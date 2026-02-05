@@ -108,4 +108,76 @@ public class StrategyController {
 
         return ResponseEntity.ok("Trade processed successfully");
     }
+
+    @org.springframework.web.bind.annotation.PostMapping("/position/{positionId}/exit")
+    public ResponseEntity<String> exitPosition(
+            @org.springframework.web.bind.annotation.PathVariable String positionId,
+            @RequestBody com.tradeoption.domain.ExitRequest request) {
+
+        com.tradeoption.domain.Position position = positionRepository.findById(positionId);
+        if (position == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Determine action based on net qty?
+        // Or strictly strictly opposing action.
+        // For simplicity, if NetQty > 0 (Long), Exit is SELL. If NetQty < 0 (Short),
+        // Exit is BUY.
+        // But what if we want to "add" to position? That's /trade.
+        // /exit implies reducing exposure.
+
+        com.tradeoption.domain.TradeAction action = position.getNetQuantity() > 0
+                ? com.tradeoption.domain.TradeAction.SELL
+                : com.tradeoption.domain.TradeAction.BUY;
+
+        com.tradeoption.domain.PositionEntry entry = new com.tradeoption.domain.PositionEntry(
+                request.getPrice(),
+                request.getQuantity(),
+                action);
+        entry.setLinkedEntryId(request.getLinkedEntryId());
+
+        position.addEntry(entry);
+        positionRepository.save(position);
+
+        dashboardBroadcaster.broadcastDashboardMetrics();
+        return ResponseEntity.ok("Exit processed");
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/position/entry/{entryId}")
+    public ResponseEntity<String> updateEntry(
+            @org.springframework.web.bind.annotation.PathVariable String entryId,
+            @RequestBody com.tradeoption.domain.EntryUpdateRequest request) {
+
+        // This is tricky: Entry is inside a Position. We need to find the Position
+        // first.
+        // RocksDB structure is Key -> Position.
+        // We might need to iterate or assume we know the Position ID?
+        // Ideally the request should contain Position ID or we scan.
+        // Scanning is expensive.
+
+        // For MVP: Let's assume we scan all positions (since dataset is small for
+        // single user)
+        // OR user passes positionId.
+        // Let's iterate findById logic for now. It's RocksDB "prefix" scan?
+        // `PositionRepository` typically loads all to memory in desktop app?
+        // Actually findEntry(entryId) is not implemented.
+
+        // Optimization: App Pass PositionId in URL?
+        // /position/{positionId}/entry/{entryId}
+
+        // Let's Scan.
+        java.util.List<com.tradeoption.domain.Position> all = positionRepository.findAll();
+        for (com.tradeoption.domain.Position p : all) {
+            for (com.tradeoption.domain.PositionEntry e : p.getEntries()) {
+                if (e.getId().equals(entryId)) {
+                    e.setPrice(request.getPrice());
+                    e.setQuantity(request.getQuantity());
+                    positionRepository.save(p); // Re-save full obj
+                    dashboardBroadcaster.broadcastDashboardMetrics();
+                    return ResponseEntity.ok("Entry updated");
+                }
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
 }
