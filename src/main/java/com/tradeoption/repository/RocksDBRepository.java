@@ -85,4 +85,35 @@ public class RocksDBRepository {
             throw new RuntimeException("Error deleting from RocksDB", e);
         }
     }
+
+    public <T> java.util.List<T> findByPrefix(String prefix, Class<T> clazz) {
+        java.util.List<T> results = new java.util.ArrayList<>();
+        try (org.rocksdb.RocksIterator iterator = db.newIterator()) {
+            byte[] prefixBytes = prefix.getBytes(StandardCharsets.UTF_8);
+            for (iterator.seek(prefixBytes); iterator.isValid(); iterator.next()) {
+                byte[] key = iterator.key();
+                // Check if key still matches prefix
+                if (!startsWith(key, prefixBytes)) {
+                    break;
+                }
+                try {
+                    T value = objectMapper.readValue(iterator.value(), clazz);
+                    results.add(value);
+                } catch (IOException e) {
+                    logger.error("Failed to deserialize value for key: " + new String(key), e);
+                }
+            }
+        }
+        return results;
+    }
+
+    private boolean startsWith(byte[] data, byte[] prefix) {
+        if (data.length < prefix.length)
+            return false;
+        for (int i = 0; i < prefix.length; i++) {
+            if (data[i] != prefix[i])
+                return false;
+        }
+        return true;
+    }
 }
