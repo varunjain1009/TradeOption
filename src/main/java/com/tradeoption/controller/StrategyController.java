@@ -24,54 +24,11 @@ public class StrategyController {
     @PostMapping
     public ResponseEntity<String> updateStrategy(@RequestBody Strategy strategy) {
         // Legacy Support: Convert incoming Strategy legs to TradeOrders/Positions
-        // This ensures the UI works without major changes yet
         for (com.tradeoption.domain.OptionLeg leg : strategy.getLegs()) {
             com.tradeoption.domain.TradeOrder order = new com.tradeoption.domain.TradeOrder();
-            order.setSymbol(strategy.getSymbol() != null ? strategy.getSymbol() : "NIFTY"); // Default fallback
-            // Assuming leg expiry is passed or defaulting to nearest (logic to be improved
-            // later)
-            // For now, let's assume the Strategy object *should* have expiry or we default
-            // Actually, OptionLeg doesn't have expiry, Strategy doesn't have expiry field
-            // in older model...
-            // Wait, UI sends: symbol, expiryDate inside legs? No, check app.js
-            // app.js sends: { symbol, legs: [ {expiryDate: ...} ] }
-
-            // We need to extract expiry from the incoming map if possible or add it to
-            // Leg/Strategy model
-            // For this quick port, let's assume we update Position from the leg details.
-
-            // Since app.js sends legs with expiryDate, we need to ensure OptionLeg has it
-            // or we parse from map
-            // BUT OptionLeg is stiff Java class.
-            // Better approach: Since `submitStrategy` sends JSON, we can map it to a custom
-            // DTO or just process here.
+            order.setSymbol(strategy.getSymbol() != null ? strategy.getSymbol() : "NIFTY");
+            // Logic pending OptionLeg update
         }
-
-        // Actually, let's just make a new endpoint for TradeOrder and update app.js to
-        // call it?
-        // OR better: process the incoming Strategy completely into Positions.
-
-        // Let's implement the `processStrategy` logic properly.
-        // NOTE: The Strategy class itself might need fields like `expiry` if they are
-        // global to strategy.
-        // app.js sends: symbol, legs [ {expiryDate...} ]
-        // We will loop through legs.
-
-        // However, `updateStrategy` is what app.js calls.
-        // Strategy.java doesn't have `expiryDate` but we can add it or read from legs
-        // (if OptionLeg has it).
-        // OptionLeg.java doesn't have expiryDate.
-
-        // Plan: app.js sends `expiryDate` in the leg object. We should add it to
-        // OptionLeg class or handle dynamic map.
-        // Since OptionLeg is compiled class, let's assume we can map it.
-
-        // To simplify for Story 9.2:
-        // We will persist the *Strategy* legs as *Positions*.
-        // But since OptionLeg ignores unknown fields (expiryDate), we lose it during
-        // deserialization!
-        // We need to update OptionLeg to include expiryDate first.
-
         return ResponseEntity.ok("Strategy updated (Legacy Mode - logic pending OptionLeg update)");
     }
 
@@ -102,26 +59,22 @@ public class StrategyController {
 
         // 3. Update Status & Timestamp
         position.setUpdatedTimestamp(System.currentTimeMillis());
-        // For a new trade (adding entry), status usually remains OPEN unless it was
-        // closed and we reopen?
-        // Or if we are adding to a position that nets to 0? (e.g. closing via trade
-        // endpoint)
         if (position.getNetQuantity() == 0) {
             position.setStatus(com.tradeoption.domain.PositionStatus.CLOSED);
         } else {
-            // Check if it was matching against existing?
-            // Simple logic: If Net != 0, it's OPEN or PARTIAL.
-            // Distinguishing PARTIAL is hard without knowing "original" size.
-            // For now, if Net != 0, ensure it is OPEN (or PARTIALLY_CLOSED if we track max
-            // size).
-            // Let's stick to: If Net == 0 -> CLOSED. Else -> OPEN (active).
             position.setStatus(com.tradeoption.domain.PositionStatus.OPEN);
         }
+
+        // Calculate PNL
+        com.tradeoption.domain.PositionPnl pnl = com.tradeoption.service.PositionPnlCalculator.calculatePnl(position,
+                0.0);
+        position.setRealizedPnl(pnl.getRealizedPnl());
+        position.setUnrealizedPnl(pnl.getUnrealizedPnl());
 
         // 4. Save
         positionRepository.save(position);
 
-        // 4. Trigger Broadcast
+        // 5. Trigger Broadcast
         dashboardBroadcaster.broadcastDashboardMetrics();
 
         return ResponseEntity.ok("Trade processed successfully");
@@ -136,13 +89,6 @@ public class StrategyController {
         if (position == null) {
             return ResponseEntity.notFound().build();
         }
-
-        // Determine action based on net qty?
-        // Or strictly strictly opposing action.
-        // For simplicity, if NetQty > 0 (Long), Exit is SELL. If NetQty < 0 (Short),
-        // Exit is BUY.
-        // But what if we want to "add" to position? That's /trade.
-        // /exit implies reducing exposure.
 
         com.tradeoption.domain.TradeAction action = position.getNetQuantity() > 0
                 ? com.tradeoption.domain.TradeAction.SELL
@@ -161,21 +107,19 @@ public class StrategyController {
         if (netQty == 0) {
             position.setStatus(com.tradeoption.domain.PositionStatus.CLOSED);
         } else {
-            // Since we exited some amount but not all, it is PARTIALLY_CLOSED?
-            // "Partially Closed" usually implies we took some profits but still have open
-            // positions.
-            // If Net Quantity != 0, valid state.
-            // Let's mark as PARTIALLY_CLOSED for visibility if it was previously fully
-            // OPEN?
-            // Or just keep it simpler: OPEN = Active. CLOSED = Flat.
-            // Requirement says: Open / Closed / Partially Closed.
-            // We can say: If we added an exit entry, and Net != 0, it is PARTIALLY_CLOSED.
             position.setStatus(com.tradeoption.domain.PositionStatus.PARTIALLY_CLOSED);
         }
+
+        // Calculate PNL
+        com.tradeoption.domain.PositionPnl pnl = com.tradeoption.service.PositionPnlCalculator.calculatePnl(position,
+                0.0);
+        position.setRealizedPnl(pnl.getRealizedPnl());
+        position.setUnrealizedPnl(pnl.getUnrealizedPnl());
 
         positionRepository.save(position);
 
         dashboardBroadcaster.broadcastDashboardMetrics();
+
         return ResponseEntity.ok("Exit processed");
     }
 
@@ -184,24 +128,6 @@ public class StrategyController {
             @org.springframework.web.bind.annotation.PathVariable String entryId,
             @RequestBody com.tradeoption.domain.EntryUpdateRequest request) {
 
-        // This is tricky: Entry is inside a Position. We need to find the Position
-        // first.
-        // RocksDB structure is Key -> Position.
-        // We might need to iterate or assume we know the Position ID?
-        // Ideally the request should contain Position ID or we scan.
-        // Scanning is expensive.
-
-        // For MVP: Let's assume we scan all positions (since dataset is small for
-        // single user)
-        // OR user passes positionId.
-        // Let's iterate findById logic for now. It's RocksDB "prefix" scan?
-        // `PositionRepository` typically loads all to memory in desktop app?
-        // Actually findEntry(entryId) is not implemented.
-
-        // Optimization: App Pass PositionId in URL?
-        // /position/{positionId}/entry/{entryId}
-
-        // Let's Scan.
         java.util.List<com.tradeoption.domain.Position> all = positionRepository.findAll();
         for (com.tradeoption.domain.Position p : all) {
             for (com.tradeoption.domain.PositionEntry e : p.getEntries()) {

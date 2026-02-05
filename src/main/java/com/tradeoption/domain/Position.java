@@ -12,6 +12,8 @@ public class Position {
     private PositionStatus status = PositionStatus.OPEN;
     private long createdTimestamp;
     private long updatedTimestamp;
+    private double realizedPnl;
+    private double unrealizedPnl;
     private List<PositionEntry> entries = new ArrayList<>();
 
     public Position() {
@@ -136,5 +138,21 @@ public class Position {
 
     public void setUpdatedTimestamp(long updatedTimestamp) {
         this.updatedTimestamp = updatedTimestamp;
+    }
+
+    public double getRealizedPnl() {
+        return realizedPnl;
+    }
+
+    public void setRealizedPnl(double realizedPnl) {
+        this.realizedPnl = realizedPnl;
+    }
+
+    public double getUnrealizedPnl() {
+        return unrealizedPnl;
+    }
+
+    public void setUnrealizedPnl(double unrealizedPnl) {
+        this.unrealizedPnl = unrealizedPnl;
     }
 }
