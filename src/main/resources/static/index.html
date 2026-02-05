@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TradeOption Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e1e; color: #e0e0e0; margin: 0; padding: 20px; }
+        .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .card { background-color: #2d2d2d; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .card-header { font-size: 1.2em; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px; color: #64b5f6; }
+        .metric-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .metric-label { color: #aaa; }
+        .metric-value { font-weight: bold; }
+        .positive { color: #4caf50; }
+        .negative { color: #f44336; }
+        #connection-status { position: fixed; bottom: 10px; right: 10px; font-size: 0.8em; color: #777; }
+        canvas { width: 100%; height: 300px; background: #252525; border-radius: 4px; }
+    </style>
+    <!-- Using CDN for simplicity as per plan -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <h1 style="color: #64b5f6;">TradeOption Analytics</h1>
+
+    <div class="grid-container">
+        <!-- Market Data -->
+        <div class="card">
+            <div class="card-header">Market Data (NIFTY)</div>
+            <div class="metric-row">
+                <span class="metric-label">Spot Price</span>
+                <span class="metric-value" id="spot-price">--</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Volatility (IV)</span>
+                <span class="metric-value" id="volatility">--</span>
+            </div>
+        </div>
+
+        <!-- Strategy Metrics -->
+        <div class="card">
+            <div class="card-header">Strategy Performance</div>
+            <div class="metric-row">
+                <span class="metric-label">Total PNL</span>
+                <span class="metric-value" id="pnl">--</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Max Profit</span>
+                <span class="metric-value" id="max-profit">--</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Max Loss</span>
+                <span class="metric-value" id="max-loss">--</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">PoP</span>
+                <span class="metric-value" id="pop">--</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Risk/Reward</span>
+                <span class="metric-value" id="risk-reward">--</span>
+            </div>
+        </div>
+
+        <!-- Greeks -->
+        <div class="card">
+            <div class="card-header">Strategy Greeks</div>
+            <div class="metric-row">
+                <span class="metric-label">Delta</span>
+                <span class="metric-value" id="delta">--</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Gamma</span>
+                <span class="metric-value" id="gamma">--</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Theta</span>
+                <span class="metric-value" id="theta">--</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Vega</span>
+                <span class="metric-value" id="vega">--</span>
+            </div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 20px;" class="card">
+        <div class="card-header">Payoff Graph (Live)</div>
+        <canvas id="payoffChart"></canvas>
+    </div>
+
+    <div id="connection-status">Disconnected</div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
