@@ -7,6 +7,7 @@ public class SystemConfig {
     private double riskFreeRate = 0.05; // Default 5%
     private Map<String, Integer> lotSizes = new HashMap<>();
     private Map<String, Double> bidAskConstraints = new HashMap<>();
+    private double maxBidAskDiffPercent = 5.0; // Default 5%
     private long refreshIntervalMs = 1000;
 
     // Dynamic Dropdowns: Map<Symbol, List<ExpiryDates>>
@@ -34,6 +35,14 @@ public class SystemConfig {
 
     public void setBidAskConstraints(Map<String, Double> bidAskConstraints) {
         this.bidAskConstraints = bidAskConstraints;
+    }
+
+    public double getMaxBidAskDiffPercent() {
+        return maxBidAskDiffPercent;
+    }
+
+    public void setMaxBidAskDiffPercent(double maxBidAskDiffPercent) {
+        this.maxBidAskDiffPercent = maxBidAskDiffPercent;
     }
 
     public long getRefreshIntervalMs() {

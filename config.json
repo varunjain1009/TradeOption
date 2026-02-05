@@ -7,6 +7,7 @@
     "bidAskConstraints": {
         "maxSpread": 5.0
     },
+    "maxBidAskDiffPercent": 5.0,
     "symbolExpiries": {
         "GOLD": [
             "27FEB2026",

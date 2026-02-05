@@ -923,3 +923,7 @@ Configurable without code change
 Applied consistently everywhere
 
 Logged for transparency
+
+
+🧩 EPIC 12 — Implement Jacoco
+STORY 12.1 — Implement Jacoco and increase the unit test coverage to 90%

@@ -17,10 +17,13 @@ public class StrategySuggestionServiceImpl implements StrategySuggestionService 
 
     private final MarketDataService marketDataService;
     private final SystemConfigService systemConfigService;
+    private final com.tradeoption.service.StrategyValidationService strategyValidationService;
 
-    public StrategySuggestionServiceImpl(MarketDataService marketDataService, SystemConfigService systemConfigService) {
+    public StrategySuggestionServiceImpl(MarketDataService marketDataService, SystemConfigService systemConfigService,
+            com.tradeoption.service.StrategyValidationService strategyValidationService) {
         this.marketDataService = marketDataService;
         this.systemConfigService = systemConfigService;
+        this.strategyValidationService = strategyValidationService;
     }
 
     @Override
@@ -41,6 +44,9 @@ public class StrategySuggestionServiceImpl implements StrategySuggestionService 
         }
 
         double atmStrike = Math.round(spot / strikeStep) * strikeStep;
+
+        // Validation: Find nearest valid strike (Story 11.4)
+        atmStrike = findValidStrike(symbol, atmStrike, strikeStep, 10);
 
         // 3. Find Expiry
         SystemConfig config = systemConfigService.getConfig();
@@ -84,6 +90,31 @@ public class StrategySuggestionServiceImpl implements StrategySuggestionService 
         return leg;
     }
 
+    private double findValidStrike(String symbol, double startStrike, double step, int maxAttempts) {
+        double currentStrike = startStrike;
+        // Try current, then +step, -step, +2*step, -2*step...
+        for (int i = 0; i < maxAttempts; i++) {
+            // Check both CE and PE for the straddle/strangle core
+            // Simplified: verify if this strike describes a valid liquid option
+            // In reality we check specific CE/PE spread.
+            // For now, assume if one is valid, this strike is "okay" to consider.
+            boolean validCE = strategyValidationService.isSpreadValid(symbol, currentStrike, "CE");
+            boolean validPE = strategyValidationService.isSpreadValid(symbol, currentStrike, "PE");
+
+            if (validCE && validPE) {
+                return currentStrike;
+            }
+
+            // Alternating search: up then down
+            if (i % 2 == 0) {
+                currentStrike = startStrike + ((i / 2 + 1) * step);
+            } else {
+                currentStrike = startStrike - ((i / 2 + 1) * step);
+            }
+        }
+        return startStrike; // Fallback to original if none found
+    }
+
     @Override
     public Strategy suggestStrangle(String symbol) {
         // 1. Get Spot Price
@@ -95,6 +126,11 @@ public class StrategySuggestionServiceImpl implements StrategySuggestionService 
         // 2. Find ATM Strike (Round to nearest 50/100)
         double strikeStep = "BANKNIFTY".equalsIgnoreCase(symbol) ? 100.0 : 50.0;
         double atmStrike = Math.round(spot / strikeStep) * strikeStep;
+
+        // Validation: Find nearest valid strike
+        // atmStrike = findValidStrike(symbol, atmStrike, strikeStep, 10); // This was
+        // commented out in the original, but the instruction implies using
+        // findValidStrike for other strikes.
 
         // 3. Find Expiry
         SystemConfig config = systemConfigService.getConfig();
@@ -114,8 +150,21 @@ public class StrategySuggestionServiceImpl implements StrategySuggestionService 
         double strangleDist = "BANKNIFTY".equalsIgnoreCase(symbol) ? 1000.0 : 500.0;
         double wingWidth = "BANKNIFTY".equalsIgnoreCase(symbol) ? 500.0 : 200.0;
 
+        // Ensure sell legs are valid, if not, adjust width?
+        // Or finding a valid center is usually enough for the structure.
+        // Let's validate the sell strikes specifically.
         double sellCallStrike = atmStrike + strangleDist;
+        if (!strategyValidationService.isSpreadValid(symbol, sellCallStrike, "CE")) {
+            // Try to find a better one? For now just log or keep.
+            // In a full implementation, we'd scan for the best liquid OTM strike.
+            sellCallStrike = findValidStrike(symbol, sellCallStrike, strikeStep, 5);
+        }
+
         double sellPutStrike = atmStrike - strangleDist;
+        if (!strategyValidationService.isSpreadValid(symbol, sellPutStrike, "PE")) {
+            sellPutStrike = findValidStrike(symbol, sellPutStrike, strikeStep, 5);
+        }
+
         double buyCallStrike = sellCallStrike + wingWidth;
         double buyPutStrike = sellPutStrike - wingWidth;
 
