@@ -49,4 +49,24 @@ public class PnlCalculatorServiceImpl implements PnlCalculatorService {
         }
         return payoffChart;
     }
+
+    @Override
+    public double calculateLiveStrategyPnl(Strategy strategy, Map<OptionLeg, Double> currentLtpMap) {
+        double totalPnl = 0;
+        for (OptionLeg leg : strategy.getLegs()) {
+            Double ltp = currentLtpMap.get(leg);
+            if (ltp != null) {
+                double pnl = 0;
+                if (leg.getAction() == TradeAction.BUY) {
+                    // Long: PNL = (Current Price - Entry Price) * Quantity
+                    pnl = (ltp - leg.getEntryPrice()) * leg.getQuantity();
+                } else {
+                    // Short: PNL = (Entry Price - Current Price) * Quantity
+                    pnl = (leg.getEntryPrice() - ltp) * leg.getQuantity();
+                }
+                totalPnl += pnl;
+            }
+        }
+        return totalPnl;
+    }
 }
