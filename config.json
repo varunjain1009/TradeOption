@@ -1,0 +1,11 @@
+{
+    "riskFreeRate": 0.05,
+    "lotSizes": {
+        "NIFTY": 50,
+        "BANKNIFTY": 15
+    },
+    "bidAskConstraints": {
+        "maxSpread": 5.0
+    },
+    "refreshIntervalMs": 1000
+}
