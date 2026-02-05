@@ -9,6 +9,9 @@ public class SystemConfig {
     private Map<String, Double> bidAskConstraints = new HashMap<>();
     private long refreshIntervalMs = 1000;
 
+    // Dynamic Dropdowns: Map<Symbol, List<ExpiryDates>>
+    private java.util.Map<String, java.util.List<String>> symbolExpiries = new java.util.HashMap<>();
+
     public double getRiskFreeRate() {
         return riskFreeRate;
     }
@@ -39,5 +42,13 @@ public class SystemConfig {
 
     public void setRefreshIntervalMs(long refreshIntervalMs) {
         this.refreshIntervalMs = refreshIntervalMs;
+    }
+
+    public java.util.Map<String, java.util.List<String>> getSymbolExpiries() {
+        return symbolExpiries;
+    }
+
+    public void setSymbolExpiries(java.util.Map<String, java.util.List<String>> symbolExpiries) {
+        this.symbolExpiries = symbolExpiries;
     }
 }

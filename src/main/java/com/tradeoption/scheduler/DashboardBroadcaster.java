@@ -35,6 +35,13 @@ public class DashboardBroadcaster {
         this.activeStrategies.add(strategy);
     }
 
+    public void setStrategy(Strategy strategy) {
+        this.activeStrategies.clear();
+        this.activeStrategies.add(strategy);
+        // Trigger immediate broadcast
+        broadcastDashboardMetrics();
+    }
+
     @Scheduled(fixedRateString = "#{@systemConfigServiceImpl.getConfig().getRefreshIntervalMs()}")
     public void broadcastDashboardMetrics() {
         if (activeStrategies.isEmpty())
@@ -69,6 +76,8 @@ public class DashboardBroadcaster {
 
         DashboardMetrics metrics = dashboardService.calculateMetrics(strategy, spot, vol, time, rate);
 
-        messagingTemplate.convertAndSend("/topic/dashboard", metrics);
+        if (metrics != null) {
+            messagingTemplate.convertAndSend("/topic/dashboard", metrics);
+        }
     }
 }

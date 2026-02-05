@@ -26,6 +26,10 @@ mkdir -p "$DIST_DIR/electron"
 echo "Copying JAR..."
 cp "$TARGET_JAR" "$DIST_DIR/target/"
 
+# Copy Config
+echo "Copying config.json..."
+cp "config.json" "$DIST_DIR/"
+
 # Copy Electron App (source only for now, assume npm install happens on start or pre-bundled)
 echo "Copying Electron Source..."
 # Copy everything from electron/ except node_modules

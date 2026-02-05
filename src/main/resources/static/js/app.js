@@ -27,8 +27,7 @@ function connect() {
             updateDashboard(JSON.parse(msg.body));
         });
 
-        // Periodic graph update (poll every 2s for demonstration, normally WS could push or event based)
-        // For story 6.2, we created a REST endpoint.
+        // Periodic graph update
         setInterval(fetchPayoffGraph, 2000);
 
     }, function (err) {
@@ -36,6 +35,85 @@ function connect() {
         document.getElementById('connection-status').style.color = '#f44336';
         setTimeout(connect, 5000);
     });
+}
+
+var legs = [];
+
+function addLeg() {
+    var tbody = document.getElementById('legs-body');
+    var row = document.createElement('tr');
+
+    row.innerHTML = `
+        <td style="padding: 5px;">
+            <select class="leg-type" style="background: #333; color: white; border: 1px solid #555;">
+                <option value="CE">CE</option>
+                <option value="PE">PE</option>
+            </select>
+        </td>
+        <td style="padding: 5px;">
+            <select class="leg-action" style="background: #333; color: white; border: 1px solid #555;">
+                <option value="BUY">BUY</option>
+                <option value="SELL">SELL</option>
+            </select>
+        </td>
+        <td style="padding: 5px;">
+            <input type="number" class="leg-strike" value="22000" style="background: #333; color: white; border: 1px solid #555; width: 100px;">
+        </td>
+        <td style="padding: 5px;">
+            <input type="number" class="leg-qty" value="50" style="background: #333; color: white; border: 1px solid #555; width: 80px;">
+        </td>
+        <td style="padding: 5px;">
+            <button onclick="this.parentElement.parentElement.remove()" style="background: #f44336; color: white; border: none; cursor: pointer;">X</button>
+        </td>
+    `;
+
+    tbody.appendChild(row);
+}
+
+function submitStrategy() {
+    var symbol = document.getElementById('symbol').value;
+    var expiry = document.getElementById('expiry').value;
+
+    var legRows = document.querySelectorAll('#legs-body tr');
+    var strategyLegs = [];
+
+    legRows.forEach(row => {
+        var type = row.querySelector('.leg-type').value;
+        var action = row.querySelector('.leg-action').value; // BUY/SELL
+        var strike = parseFloat(row.querySelector('.leg-strike').value);
+        var qty = parseFloat(row.querySelector('.leg-qty').value);
+
+        var signedQty = action === 'BUY' ? qty : -qty;
+
+        strategyLegs.push({
+            optionType: type,
+            strikePrice: strike,
+            quantity: signedQty,
+            expiryDate: expiry
+        });
+    });
+
+    var strategy = {
+        symbol: symbol,
+        legs: strategyLegs,
+        name: "Custom Strategy"
+    };
+
+    fetch('/api/strategy', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(strategy)
+    })
+        .then(response => {
+            if (response.ok) {
+                console.log('Strategy submitted successfully');
+            } else {
+                console.error('Failed to submit strategy');
+            }
+        })
+        .catch(error => console.error('Error:', error));
 }
 
 function updateSpot(data) {
@@ -69,20 +147,11 @@ function updateDashboard(data) {
     document.getElementById('pop').innerText = (data.probabilityOfProfit * 100).toFixed(1) + '%';
     document.getElementById('risk-reward').innerText = data.riskRewardRatio.toFixed(2);
 
-    // Pnl also in dashboard metrics, redundant but ensures sync
     updatePnl(data.currentPnl);
 }
 
 function fetchPayoffGraph() {
-    // Need a strategy to post. For demo, we might need a mocked strategy or handle this differently.
-    // Since the backend 'DashboardBroadcaster' uses a hardcoded/in-memory strategy, 
-    // we can't easily query *that* strategy from here via REST unless we expose "GET /api/strategy/current".
-    // Or we send the strategy parameters.
-    // For now, let's assume the PayoffGraphController accepts a dummy strategy for visual verification 
-    // if we don't have a strategy builder UI.
-    // NOTE: Story 7.1 is "Wrapper", not full UI build. We verified backend with tests.
-    // I will skip the graph polling implementation details to avoid complexity without a real strategy object.
-    // In a real app, this `app.js` would have the Strategy state.
+    // Placeholder
 }
 
 // Chart Initialization
@@ -118,7 +187,60 @@ function initChart() {
     });
 }
 
+// Initialize with Performance Optimization
+function fetchConfig() {
+    fetch('/api/config')
+        .then(response => response.json())
+        .then(config => {
+            var symbolExpiries = config.symbolExpiries;
+            var symbolSelect = document.getElementById('symbol');
+            var expirySelect = document.getElementById('expiry');
+
+            // Optimization: Pre-compute the HTML for each symbol's expiry options
+            // This ensures the 'change' event is instant, as we just swap the innerHTML string.
+            var expiryHtmlCache = {};
+
+            Object.keys(symbolExpiries).forEach(sym => {
+                var dates = symbolExpiries[sym] || [];
+                var optionsHtml = dates.map(date => `<option value="${date}">${date}</option>`).join('');
+                expiryHtmlCache[sym] = optionsHtml;
+            });
+
+            // Fast update function
+            function updateExpiryDropdown(symbol) {
+                if (expiryHtmlCache[symbol]) {
+                    expirySelect.innerHTML = expiryHtmlCache[symbol];
+                } else {
+                    expirySelect.innerHTML = '<option value="">-- No Expiry --</option>';
+                }
+            }
+
+            // Populate Symbols
+            symbolSelect.innerHTML = '';
+            Object.keys(symbolExpiries).forEach(sym => {
+                var opt = document.createElement('option');
+                opt.value = sym;
+                opt.innerText = sym;
+                symbolSelect.appendChild(opt);
+            });
+
+            // Set initial state
+            if (symbolSelect.options.length > 0) {
+                updateExpiryDropdown(symbolSelect.value);
+            }
+
+            // Add change listener
+            symbolSelect.addEventListener('change', function () {
+                updateExpiryDropdown(this.value);
+            });
+
+            console.log('Configuration loaded with optimization');
+        })
+        .catch(err => console.error('Error loading config:', err));
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    fetchConfig();
     initChart();
     connect();
 });

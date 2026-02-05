@@ -65,7 +65,9 @@ public class GreeksBroadcaster {
 
             Greeks greeks = greeksService.calculateStrategyGreeks(strategy, spot, volatility, rate, timeToExpiry);
 
-            messagingTemplate.convertAndSend("/topic/greeks", greeks);
+            if (greeks != null) {
+                messagingTemplate.convertAndSend("/topic/greeks", greeks);
+            }
         }
     }
 }

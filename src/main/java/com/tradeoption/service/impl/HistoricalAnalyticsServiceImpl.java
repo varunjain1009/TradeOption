@@ -8,7 +8,6 @@ import com.tradeoption.service.HistoricalAnalyticsService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class HistoricalAnalyticsServiceImpl implements HistoricalAnalyticsService {

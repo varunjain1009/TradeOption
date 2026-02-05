@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -35,7 +34,8 @@ public class RocksDBRepository {
 
     @PostConstruct
     public void init() {
-        Options options = new Options().setCreateIfMissing(true);
+        Options options = new Options();
+        options.setCreateIfMissing(true);
         try {
             // Ensure directory exists if path is deeper, but here likely just local folder
             db = RocksDB.open(options, DB_FILE);
@@ -43,6 +43,8 @@ public class RocksDBRepository {
         } catch (RocksDBException e) {
             logger.error("Error initializing RocksDB", e);
             throw new RuntimeException("Failed to initialize RocksDB", e);
+        } finally {
+            options.close();
         }
     }
 

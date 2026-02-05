@@ -7,5 +7,31 @@
     "bidAskConstraints": {
         "maxSpread": 5.0
     },
+    "symbolExpiries": {
+        "GOLD": [
+            "27FEB2026",
+            "24MAR2026",
+            "30APR2026",
+            "27MAY2026",
+            "23JUN2026"
+        ],
+        "GOLDM": [
+            "26FEB2026",
+            "26MAR2026"
+        ],
+        "SILVER": [
+            "24FEB2026",
+            "26MAR2026",
+            "24APR2026",
+            "26MAY2026",
+            "24JUN2026",
+            "28JUL2026"
+        ],
+        "CRUDEOIL": [
+            "17FEB2026",
+            "17MAR2026",
+            "16APR2026"
+        ]
+    },
     "refreshIntervalMs": 1000
 }

@@ -7,7 +7,6 @@ import com.tradeoption.service.ProbabilityService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -93,7 +92,6 @@ public class ProbabilityServiceImpl implements ProbabilityService {
         // 2. Between each adjacent strike pair
         // 3. Far Right Tail (above max strike)
 
-        List<Double> checkPoints = new ArrayList<>();
         // Add a point far left: minStrike - 1000 (arbitrary large gap)
         // Ideally we check slope.
         // Let's simplify: Check PNL at each strike. Check PNL at min-epsilon and

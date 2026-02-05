@@ -13,8 +13,35 @@ public class MockMarketDataService implements MarketDataService {
 
     @Override
     public double getLtp(String symbol) {
-        // Mock implementation: returns a random price between 100 and 200
-        return 100 + (200 - 100) * random.nextDouble();
+        // Mock implementation with realistic ranges
+        double base = 100;
+        switch (symbol.toUpperCase()) {
+            case "NIFTY":
+                base = 22000;
+                break;
+            case "BANKNIFTY":
+                base = 47000;
+                break;
+            case "GOLD":
+                base = 62000;
+                break;
+            case "SILVER":
+                base = 72000;
+                break;
+            case "CRUDEOIL":
+                base = 6000;
+                break;
+            case "NATURALGAS":
+                base = 150;
+                break;
+            case "COPPER":
+                base = 720;
+                break;
+            default:
+                base = 100;
+        }
+        // Fluctuate by +/- 0.5%
+        return base + (base * 0.005 * (random.nextDouble() * 2 - 1));
     }
 
     @Override

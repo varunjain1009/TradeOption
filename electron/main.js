@@ -40,6 +40,10 @@ function createWindow() {
 
     checkBackend();
 
+    mainWindow.webContents.on('did-finish-load', () => {
+        console.log('UI loaded successfully!');
+    });
+
     mainWindow.on('closed', function () {
         mainWindow = null;
     });

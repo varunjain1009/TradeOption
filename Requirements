@@ -608,3 +608,318 @@ Acceptance Criteria
 No recompilation needed
 
 Config changes reflected live
+
+🧩 EPIC 9 — POSITION LIFECYCLE & STATE MANAGEMENT
+STORY 9.1 — Position-Centric Data Model & DB Source of Truth
+
+Story Name:
+POSITION_AS_SOURCE_OF_TRUTH
+
+Description
+
+Define a position-centric domain model where:
+
+Commodity
+
+Expiry
+
+StrikePrice
+
+CE/PE
+
+Buy/Sell
+are always derived from stored positions in RocksDB, not from UI state.
+
+All downstream operations (PNL, Greeks, strike price fetch, T-0 pricing) must reference the persisted position.
+
+Tools / Tech
+
+Spring Boot
+
+RocksDB
+
+Domain-driven design (Position → Entries → Legs)
+
+Acceptance Criteria
+
+StrikePrice & Commodity always loaded from DB
+
+No calculation uses UI-only values
+
+Restart preserves exact state
+
+STORY 9.2 — Multi-Entry Same-Strike Support
+
+Story Name:
+MULTI_ENTRY_SAME_STRIKE
+
+Description
+
+Allow users to:
+
+Enter the same strike multiple times
+
+At different prices
+
+With different directions (buy/sell)
+
+Each entry is treated as an independent leg but aggregates correctly at position level.
+
+Tools / Tech
+
+Java collections
+
+Aggregation logic in Pricing Service
+
+RocksDB persistence
+
+Acceptance Criteria
+
+Unlimited entries per strike
+
+Correct PNL aggregation
+
+Correct Greeks aggregation
+
+No overwriting of previous entries
+
+STORY 9.3 — Exit Price Update & Partial Exit Handling
+
+Story Name:
+EXIT_PRICE_UPDATE_ENGINE
+
+Description
+
+Enable users to:
+
+Update exit price for each individual entry
+
+Perform partial exits
+
+Recalculate realized vs unrealized PNL
+
+Tools / Tech
+
+REST API
+
+RocksDB updates
+
+Immutable entry history (append-only)
+
+Acceptance Criteria
+
+Exit updates persist correctly
+
+Realized PNL locked
+
+Unrealized PNL continues live
+
+No corruption of history
+
+🧩 EPIC 10 — HISTORICAL POSITIONS & REPORTING
+STORY 10.1 — Historical Positions Registry
+
+Story Name:
+HISTORICAL_POSITIONS_REGISTRY
+
+Description
+
+Maintain a dedicated historical positions index:
+
+Each position stored with lifecycle timestamps
+
+Open / Closed / Partially Closed status
+
+Tools / Tech
+
+RocksDB key-range indexing
+
+Position snapshots
+
+Acceptance Criteria
+
+All past positions visible after restart
+
+Status correct
+
+No data loss
+
+STORY 10.2 — Per-Position PNL Calculation & Storage
+
+Story Name:
+POSITION_LEVEL_PNL_CALCULATION
+
+Description
+
+Compute and store:
+
+PNL per position (not only per strategy)
+
+Realized + Unrealized breakdown
+
+Tools / Tech
+
+Pricing Service
+
+Scheduled snapshots
+
+RocksDB persistence
+
+Acceptance Criteria
+
+Position PNL matches sum of entries
+
+Historical PNL immutable
+
+Live PNL updates independently
+
+STORY 10.3 — Historical PNL Graph Rendering
+
+Story Name:
+HISTORICAL_PNL_GRAPH_UI
+
+Description
+
+Render a dedicated UI section showing:
+
+One PNL graph per position
+
+Timeline-based PNL evolution
+
+Entry / exit markers
+
+Tools / Tech
+
+HTML5 Canvas / Chart.js
+
+RocksDB historical data fetch
+
+Acceptance Criteria
+
+Correct PNL timeline
+
+Smooth rendering
+
+No page reload
+
+🧩 EPIC 11 — STRATEGY SUGGESTION & PRE-TRADE ANALYTICS
+STORY 11.1 — Max PNL Suggestion at Entry Time
+
+Story Name:
+MAX_PNL_PRE_TRADE_SUGGESTION
+
+Description
+
+Before a position is finalized, the system must:
+
+Simulate payoff
+
+Compute Max Profit / Max Loss
+
+Display to user before entry confirmation
+
+Tools / Tech
+
+Pricing engine
+
+Frontend preview panel
+
+Acceptance Criteria
+
+Preview matches actual post-trade PNL
+
+No lag
+
+Mandatory display before confirmation
+
+STORY 11.2 — Straddle Strategy Auto-Suggestion
+
+Story Name:
+BEST_STRADDLE_SUGGESTION_ENGINE
+
+Description
+
+Scan option chain to suggest:
+
+Best ATM straddle (4 legs)
+
+Highest expected PNL or best risk-reward
+
+Constraints:
+
+Bid-Ask spread ≤ configurable %
+
+Lot size respected
+
+Tools / Tech
+
+Option Chain Service
+
+Pricing & PoP engine
+
+Config-driven constraints
+
+Acceptance Criteria
+
+Suggestions respect bid-ask rule
+
+Correct leg construction
+
+Ranked output
+
+STORY 11.3 — Strangle Strategy Auto-Suggestion
+
+Story Name:
+BEST_STRANGLE_SUGGESTION_ENGINE
+
+Description
+
+Scan OTM strikes to suggest:
+
+Best PE + CE strangle (4 legs)
+
+Configurable distance from ATM
+
+Spread constraint enforced
+
+Tools / Tech
+
+Option Chain analysis
+
+Probability & PNL ranking
+
+Acceptance Criteria
+
+Valid strangle legs only
+
+Spread ≤ config %
+
+Suggestions explain rationale
+
+STORY 11.4 — Bid-Ask Spread Validation Engine
+
+Story Name:
+BID_ASK_SPREAD_VALIDATION
+
+Description
+
+Central engine to:
+
+Reject strikes where
+(ask - bid) / bid > config.maxBidAskDiffPercent
+
+Used by all strategy suggestions
+
+Tools / Tech
+
+Config JSON
+
+Validation utilities
+
+Acceptance Criteria
+
+Configurable without code change
+
+Applied consistently everywhere
+
+Logged for transparency

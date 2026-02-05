@@ -2,6 +2,7 @@ package com.tradeoption.service.impl;
 
 import com.tradeoption.service.McxApiService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -10,12 +11,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class McxApiServiceImpl implements McxApiService {
 
     private final RestTemplate mcxRestTemplate;
+    @NonNull
+    private final String baseUrl;
 
-    @Value("${mcx.api.base-url}")
-    private String baseUrl;
-
-    public McxApiServiceImpl(RestTemplate mcxRestTemplate) {
+    public McxApiServiceImpl(RestTemplate mcxRestTemplate, @Value("${mcx.api.base-url}") @NonNull String baseUrl) {
         this.mcxRestTemplate = mcxRestTemplate;
+        this.baseUrl = baseUrl;
     }
 
     @Override
