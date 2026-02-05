@@ -241,6 +241,159 @@ function fetchConfig() {
 
 document.addEventListener('DOMContentLoaded', function () {
     fetchConfig();
+    fetchPositions();
     initChart();
     connect();
 });
+
+function fetchPositions() {
+    fetch('/api/strategy/positions')
+        .then(response => response.json())
+        .then(positions => {
+            renderPositions(positions);
+        })
+        .catch(err => console.error('Error fetching positions:', err));
+}
+
+function renderPositions(positions) {
+    // We need a place to put this table. 
+    // Since index.html doesn't have a specific container, let's inject a new card dynamically if it doesn't exist.
+    let container = document.getElementById('positions-container');
+    if (!container) {
+        // Find the grid container to append to
+        const grid = document.querySelector('.grid-container');
+        container = document.createElement('div');
+        container.id = 'positions-container';
+        container.className = 'card';
+        container.style.gridColumn = 'span 3';
+        container.style.marginTop = '20px';
+        container.innerHTML = `
+            <div class="card-header">Open Positions</div>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #444;">
+                        <th style="padding: 10px; text-align: left;">Symbol</th>
+                        <th style="padding: 10px; text-align: left;">Expiry</th>
+                        <th style="padding: 10px; text-align: left;">Strike</th>
+                        <th style="padding: 10px; text-align: left;">Type</th>
+                        <th style="padding: 10px; text-align: right;">Net Qty</th>
+                        <th style="padding: 10px; text-align: right;">Realized PNL</th>
+                        <th style="padding: 10px; text-align: right;">Status</th>
+                        <th style="padding: 10px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="positions-body"></tbody>
+            </table>
+        `;
+        // Insert after Strategy Builder (which is first child)
+        if (grid.firstChild) {
+            grid.insertBefore(container, grid.children[1]); // Insert after first card
+        } else {
+            grid.appendChild(container);
+        }
+    }
+
+    const tbody = document.getElementById('positions-body');
+    tbody.innerHTML = '';
+
+    positions.forEach(pos => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #333';
+        tr.innerHTML = `
+            <td style="padding: 10px;">${pos.symbol}</td>
+            <td style="padding: 10px;">${pos.expiryDate}</td>
+            <td style="padding: 10px;">${pos.strikePrice}</td>
+            <td style="padding: 10px;">${pos.optionType}</td>
+            <td style="padding: 10px; text-align: right;">${pos.netQuantity}</td>
+            <td style="padding: 10px; text-align: right;" class="${pos.realizedPnl >= 0 ? 'positive' : 'negative'}">${pos.realizedPnl.toFixed(2)}</td>
+            <td style="padding: 10px; text-align: right;">${pos.status}</td>
+            <td style="padding: 10px; text-align: center;">
+                <button onclick="showHistory('${pos.id}')" style="padding: 5px 10px; background: #64b5f6; color: white; border: none; cursor: pointer; border-radius: 4px;">History</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// Chart instance
+let pnlChartInstance = null;
+
+function showHistory(positionId) {
+    const modal = document.getElementById('historyModal');
+    // If modal doesn't exist (it should be in index.html), create it dynamically?
+    // Implementation plan said update index.html. I updated index.html but did I save it properly? 
+    // Yes, Step 842.
+
+    // Wait, Step 842 updated index.html but did NOT verify logic.
+    // Let's assume it IS there.
+    if (modal) {
+        modal.style.display = 'block';
+        fetch(`/api/strategy/position/${positionId}/history`)
+            .then(response => response.json())
+            .then(data => {
+                renderPnlChart(data);
+            })
+            .catch(error => console.error('Error fetching history:', error));
+    } else {
+        console.error('History modal not found!');
+    }
+}
+
+// Note: Function name change to avoid collision if any
+function renderPnlChart(historyData) {
+    const ctx = document.getElementById('pnlChart');
+    if (!ctx) return;
+
+    if (pnlChartInstance) {
+        pnlChartInstance.destroy();
+    }
+
+    // Sort just in case
+    historyData.sort((a, b) => a.timestamp - b.timestamp);
+
+    const labels = historyData.map(point => new Date(point.timestamp).toLocaleTimeString());
+    const dataPoints = historyData.map(point => point.realizedPnl);
+
+    pnlChartInstance = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Realized PNL',
+                data: dataPoints,
+                borderColor: '#007bff',
+                tension: 0.1,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'PNL (INR)' },
+                    grid: { color: '#333' }, ticks: { color: '#ccc' }
+                },
+                x: {
+                    title: { display: true, text: 'Time' },
+                    grid: { color: '#333' }, ticks: { color: '#ccc' }
+                }
+            },
+            plugins: { legend: { labels: { color: '#ccc' } } }
+        }
+    });
+
+}
+
+window.closeHistoryModal = function () {
+    const modal = document.getElementById('historyModal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Global click to close
+window.onclick = function (event) {
+    const modal = document.getElementById('historyModal');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}

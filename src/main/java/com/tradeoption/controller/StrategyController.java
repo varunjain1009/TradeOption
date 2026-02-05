@@ -142,4 +142,46 @@ public class StrategyController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/position/{positionId}/history")
+    public ResponseEntity<java.util.List<com.tradeoption.domain.PnlHistoryPoint>> getPositionHistory(
+            @org.springframework.web.bind.annotation.PathVariable String positionId) {
+
+        com.tradeoption.domain.Position position = positionRepository.findById(positionId);
+        if (position == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        java.util.List<com.tradeoption.domain.PnlHistoryPoint> history = new java.util.ArrayList<>();
+
+        // Reconstruct history
+        // 1. Create a temp position
+        com.tradeoption.domain.Position tempPos = new com.tradeoption.domain.Position(
+                position.getSymbol(), position.getExpiryDate(), position.getStrikePrice(), position.getOptionType());
+
+        // 2. Sort entries by timestamp
+        java.util.List<com.tradeoption.domain.PositionEntry> sortedEntries = new java.util.ArrayList<>(
+                position.getEntries());
+        sortedEntries.sort(java.util.Comparator.comparingLong(com.tradeoption.domain.PositionEntry::getTimestamp));
+
+        // 3. Replay
+        // Initial point? 0 PNL at start?
+        long startTime = sortedEntries.isEmpty() ? System.currentTimeMillis() : sortedEntries.get(0).getTimestamp();
+        history.add(new com.tradeoption.domain.PnlHistoryPoint(startTime - 1000, 0.0)); // 1 sec before start
+
+        for (com.tradeoption.domain.PositionEntry entry : sortedEntries) {
+            tempPos.addEntry(entry);
+            com.tradeoption.domain.PositionPnl pnl = com.tradeoption.service.PositionPnlCalculator.calculatePnl(tempPos,
+                    0.0);
+
+            history.add(new com.tradeoption.domain.PnlHistoryPoint(entry.getTimestamp(), pnl.getRealizedPnl()));
+        }
+
+        return ResponseEntity.ok(history);
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/positions")
+    public ResponseEntity<java.util.List<com.tradeoption.domain.Position>> getPositions() {
+        return ResponseEntity.ok(positionRepository.findAll());
+    }
 }
