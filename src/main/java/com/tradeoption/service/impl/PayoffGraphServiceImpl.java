@@ -28,8 +28,14 @@ public class PayoffGraphServiceImpl implements PayoffGraphService {
         List<Double> expiryPnl = new ArrayList<>();
         List<Double> tZeroPnl = new ArrayList<>();
 
-        double minSpot = currentSpot * (1 - rangePercentage);
-        double maxSpot = currentSpot * (1 + rangePercentage);
+        // 1. Determine Range (Include Spot AND all Strikes)
+        double minStrike = strategy.getLegs().stream().mapToDouble(com.tradeoption.domain.OptionLeg::getStrikePrice)
+                .min().orElse(currentSpot);
+        double maxStrike = strategy.getLegs().stream().mapToDouble(com.tradeoption.domain.OptionLeg::getStrikePrice)
+                .max().orElse(currentSpot);
+
+        double minSpot = Math.min(currentSpot * (1 - rangePercentage), minStrike * 0.90);
+        double maxSpot = Math.max(currentSpot * (1 + rangePercentage), maxStrike * 1.10);
 
         int steps = 100; // Resolution
         double stepSize = (maxSpot - minSpot) / steps;
@@ -50,24 +56,54 @@ public class PayoffGraphServiceImpl implements PayoffGraphService {
                         volatility, interestRate, isCall);
 
                 if (leg.getAction() == com.tradeoption.domain.TradeAction.BUY) {
-                    theoreticalValue += (legPrice * leg.getQuantity());
+                    theoreticalValue += (legPrice * Math.abs(leg.getQuantity()));
                 } else {
-                    theoreticalValue -= (legPrice * leg.getQuantity());
+                    theoreticalValue -= (legPrice * Math.abs(leg.getQuantity()));
                 }
             }
 
             double netEntryCost = 0.0;
             for (com.tradeoption.domain.OptionLeg leg : strategy.getLegs()) {
                 if (leg.getAction() == com.tradeoption.domain.TradeAction.BUY) {
-                    netEntryCost += (leg.getEntryPrice() * leg.getQuantity());
+                    netEntryCost += (leg.getEntryPrice() * Math.abs(leg.getQuantity()));
                 } else {
-                    netEntryCost -= (leg.getEntryPrice() * leg.getQuantity());
+                    netEntryCost -= (leg.getEntryPrice() * Math.abs(leg.getQuantity()));
                 }
             }
 
+            // 3. Calculate Net Credit
             tZeroPnl.add(theoreticalValue - netEntryCost);
         }
 
-        return new PayoffGraphData(spotPrices, expiryPnl, tZeroPnl);
+        // 3. Calculate Net Credit
+        double netCredit = 0.0;
+        for (com.tradeoption.domain.OptionLeg leg : strategy.getLegs()) {
+            if (leg.getAction() == com.tradeoption.domain.TradeAction.SELL) {
+                netCredit += (leg.getEntryPrice() * Math.abs(leg.getQuantity()));
+            } else {
+                netCredit -= (leg.getEntryPrice() * Math.abs(leg.getQuantity()));
+            }
+        }
+
+        // 4. Calculate Breakevens
+        List<Double> breakevens = new ArrayList<>();
+        if (expiryPnl.size() >= 2) {
+            for (int j = 0; j < expiryPnl.size() - 1; j++) {
+                double pnl1 = expiryPnl.get(j);
+                double pnl2 = expiryPnl.get(j + 1);
+
+                if ((pnl1 <= 0 && pnl2 >= 0) || (pnl1 >= 0 && pnl2 <= 0)) {
+                    if (Math.abs(pnl2 - pnl1) > 0.0001) { // Avoid division by zero
+                        double spot1 = spotPrices.get(j);
+                        double spot2 = spotPrices.get(j + 1);
+                        double fraction = (0 - pnl1) / (pnl2 - pnl1);
+                        double crossingSpot = spot1 + fraction * (spot2 - spot1);
+                        breakevens.add(Math.round(crossingSpot * 100.0) / 100.0);
+                    }
+                }
+            }
+        }
+
+        return new PayoffGraphData(spotPrices, expiryPnl, tZeroPnl, breakevens, netCredit);
     }
 }

@@ -24,12 +24,14 @@ public class PositionHistoryTest {
     private com.tradeoption.scheduler.DashboardBroadcaster dashboardBroadcaster;
 
     @Autowired
-    private com.tradeoption.repository.RocksDBRepository rocksDBRepository; // To ensure DB is ready
+    private com.tradeoption.repository.RocksDBRepository rocksDBRepository; // To
+    // ensure DB is ready
 
     @BeforeEach
     public void setup() {
         // Can't easily clear rocksdb in shared env without restart or custom method.
-        // We will maintain unique IDs by using random symbols or independent test data.
+        // We will maintain unique IDs by using random symbols or independent test
+        // data.
     }
 
     @Test
@@ -46,7 +48,8 @@ public class PositionHistoryTest {
 
         strategyController.placeTrade(order);
 
-        String posId = Position.generateId(order.getSymbol(), order.getExpiryDate(), order.getStrikePrice(),
+        String posId = Position.generateId(order.getSymbol(), order.getExpiryDate(),
+                order.getStrikePrice(),
                 order.getOptionType());
         Position pos = positionRepository.findById(posId);
         assertNotNull(pos);

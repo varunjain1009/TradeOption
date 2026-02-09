@@ -33,11 +33,14 @@ public class PnlBroadcaster {
 
     @Scheduled(fixedRate = 1000)
     public void broadcastPnl() {
-        double spot = marketDataService.getLtp("NIFTY");
+        java.util.Optional<Double> ltpOpt = marketDataService.getLtp("NIFTY");
+        if (ltpOpt.isEmpty())
+            return;
+        double ltp = ltpOpt.get();
         double totalPnl = 0.0;
 
         for (Strategy strategy : activeStrategies) {
-            totalPnl += pnlService.calculateStrategyPnl(strategy, spot);
+            totalPnl += pnlService.calculateStrategyPnl(strategy, ltp);
         }
 
         // Broadcast total PNL (simple double or object)

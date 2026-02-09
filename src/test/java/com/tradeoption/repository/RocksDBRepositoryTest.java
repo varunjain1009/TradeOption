@@ -4,32 +4,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.rocksdb.RocksDB;
-import org.springframework.util.FileSystemUtils;
-
-import java.io.File;
-import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class RocksDBRepositoryTest {
 
     private RocksDBRepository repository;
-    private String testDbFile;
+    @org.junit.jupiter.api.io.TempDir
+    java.nio.file.Path tempDir;
 
     @BeforeEach
     public void setUp() {
-        testDbFile = "trade-option-db-test-" + java.util.UUID.randomUUID();
-        // Ensure clean slate
-        FileSystemUtils.deleteRecursively(new File(testDbFile));
-        repository = new RocksDBRepository(new ObjectMapper(), testDbFile);
+        String dbPath = tempDir.resolve("test-db").toString();
+        repository = new RocksDBRepository(new ObjectMapper(), dbPath);
         repository.init();
     }
 
     @AfterEach
     public void tearDown() {
         repository.close();
-        FileSystemUtils.deleteRecursively(new File(testDbFile));
     }
 
     @Test

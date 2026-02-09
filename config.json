@@ -1,38 +1,33 @@
 {
-    "riskFreeRate": 0.05,
-    "lotSizes": {
-        "NIFTY": 50,
-        "BANKNIFTY": 15
-    },
-    "bidAskConstraints": {
-        "maxSpread": 5.0
-    },
-    "maxBidAskDiffPercent": 5.0,
-    "symbolExpiries": {
-        "GOLD": [
-            "27FEB2026",
-            "24MAR2026",
-            "30APR2026",
-            "27MAY2026",
-            "23JUN2026"
-        ],
-        "GOLDM": [
-            "26FEB2026",
-            "26MAR2026"
-        ],
-        "SILVER": [
-            "24FEB2026",
-            "26MAR2026",
-            "24APR2026",
-            "26MAY2026",
-            "24JUN2026",
-            "28JUL2026"
-        ],
-        "CRUDEOIL": [
-            "17FEB2026",
-            "17MAR2026",
-            "16APR2026"
-        ]
-    },
-    "refreshIntervalMs": 1000
+  "riskFreeRate" : 0.075,
+  "lotSizes" : {
+    "NIFTY" : 50,
+    "BANKNIFTY" : 15,
+    "GOLD" : 100,
+    "GOLDM" : 10,
+    "CRUDEOIL" : 100
+  },
+  "bidAskConstraints" : {
+    "maxSpread" : 5.0
+  },
+  "maxBidAskDiffPercent" : 5.0,
+  "refreshIntervalMs" : 100,
+  "spotBroadcastIntervalMs" : 5000,
+  "symbolExpiries" : {
+    "GOLD" : [ "27FEB2026", "24MAR2026", "30APR2026", "27MAY2026", "23JUN2026" ],
+    "GOLDM" : [ "26FEB2026", "26MAR2026" ],
+    "SILVER" : [ "24FEB2026", "26MAR2026", "24APR2026", "26MAY2026", "24JUN2026", "28JUL2026" ],
+    "CRUDEOIL" : [ "17FEB2026", "17MAR2026", "16APR2026" ]
+  },
+  "holidays" : [ ],
+  "specialSessions" : [ {
+    "date" : "2026-02-09",
+    "startTime" : "00:00",
+    "endTime" : "23:59",
+    "reason" : "Test Session"
+  } ],
+  "enableMockFallback" : true,
+  "marketOpenTime" : "09:00",
+  "marketCloseTime" : "23:45",
+  "marketClosedDays" : [ "SUNDAY", "MONDAY" ]
 }

@@ -60,15 +60,16 @@ public class GreeksServiceTest {
     public void testStrategyAggregation_DeltaNeutral() {
         Strategy strategy = new Strategy();
         // Buy 1 ATM Call (Delta ~ 0.6)
-        OptionLeg callLeg = new OptionLeg(10000, LegType.CE, TradeAction.BUY, 0, 100, "28MAR2024"); // 1 lot = 100 qty
+        OptionLeg callLeg = new OptionLeg(10000, LegType.CE, TradeAction.BUY, 0, 100, "28MAR2024", "NIFTY"); // 1 lot =
+                                                                                                             // 100 qty
         // Sell appropriate amount of underlying or options to neutralise.
         // Let's try a Straddle: Buy Call + Buy Put.
         // Delta Call ~ 0.6, Delta Put ~ -0.4. Sum ~ +0.2. Not neutral.
 
         // Let's just verify the sum logic.
         // Buy 1 Call, Sell 1 Call (same strike). Net should be 0.
-        OptionLeg buyCall = new OptionLeg(10000, LegType.CE, TradeAction.BUY, 0, 100, "28MAR2024");
-        OptionLeg sellCall = new OptionLeg(10000, LegType.CE, TradeAction.SELL, 0, 100, "28MAR2024");
+        OptionLeg buyCall = new OptionLeg(10000, LegType.CE, TradeAction.BUY, 0, 100, "28MAR2024", "NIFTY");
+        OptionLeg sellCall = new OptionLeg(10000, LegType.CE, TradeAction.SELL, 0, 100, "28MAR2024", "NIFTY");
 
         strategy.addLeg(buyCall);
         strategy.addLeg(sellCall);
@@ -80,8 +81,8 @@ public class GreeksServiceTest {
         // But the service takes leg.getStrikePrice().
         // So we need to ensure local legs match the parameters we expect.
         // Re-creating legs with correct strike
-        OptionLeg leg1 = new OptionLeg(100, LegType.CE, TradeAction.BUY, 0, 1, "28MAR2024");
-        OptionLeg leg2 = new OptionLeg(100, LegType.CE, TradeAction.SELL, 0, 1, "28MAR2024");
+        OptionLeg leg1 = new OptionLeg(100, LegType.CE, TradeAction.BUY, 0, 1, "28MAR2024", "NIFTY");
+        OptionLeg leg2 = new OptionLeg(100, LegType.CE, TradeAction.SELL, 0, 1, "28MAR2024", "NIFTY");
 
         Strategy s = new Strategy();
         s.addLeg(leg1);

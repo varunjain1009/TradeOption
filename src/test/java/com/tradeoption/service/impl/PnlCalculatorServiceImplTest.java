@@ -23,7 +23,7 @@ public class PnlCalculatorServiceImplTest {
     @Test
     public void testLongCallPnl() {
         // Buy Call Strike 100 @ 5.0
-        OptionLeg longCall = new OptionLeg(100.0, LegType.CE, TradeAction.BUY, 5.0, 1, "28MAR2024");
+        OptionLeg longCall = new OptionLeg(100.0, LegType.CE, TradeAction.BUY, 5.0, 1, "28MAR2024", "NIFTY");
 
         // Spot 90 (OTM): Loss = Premium = -5
         assertEquals(-5.0, calculator.calculateLegPnl(longCall, 90.0));
@@ -41,7 +41,7 @@ public class PnlCalculatorServiceImplTest {
     @Test
     public void testShortPutPnl() {
         // Sell Put Strike 100 @ 5.0
-        OptionLeg shortPut = new OptionLeg(100.0, LegType.PE, TradeAction.SELL, 5.0, 1, "28MAR2024");
+        OptionLeg shortPut = new OptionLeg(100.0, LegType.PE, TradeAction.SELL, 5.0, 1, "28MAR2024", "NIFTY");
 
         // Spot 110 (OTM): Profit = Premium = 5
         assertEquals(5.0, calculator.calculateLegPnl(shortPut, 110.0));
@@ -54,8 +54,8 @@ public class PnlCalculatorServiceImplTest {
     public void testStraddlePnl() {
         // Long Straddle: Buy Call 100 @ 5, Buy Put 100 @ 5. Total Debit 10.
         Strategy straddle = new Strategy();
-        straddle.addLeg(new OptionLeg(100.0, LegType.CE, TradeAction.BUY, 5.0, 1, "28MAR2024"));
-        straddle.addLeg(new OptionLeg(100.0, LegType.PE, TradeAction.BUY, 5.0, 1, "28MAR2024"));
+        straddle.addLeg(new OptionLeg(100.0, LegType.CE, TradeAction.BUY, 5.0, 1, "28MAR2024", "NIFTY"));
+        straddle.addLeg(new OptionLeg(100.0, LegType.PE, TradeAction.BUY, 5.0, 1, "28MAR2024", "NIFTY"));
 
         // Spot 100 (ATM): Both expire worthless (relative to strike/action logic for
         // intrinsic).

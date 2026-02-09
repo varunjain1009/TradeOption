@@ -6,51 +6,103 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
-import static org.hamcrest.Matchers.containsString;
 
 @SpringBootTest
 public class McxApiServiceImplTest {
 
-    @Autowired
-    private RestTemplate mcxRestTemplate;
+        @MockBean
+        private org.springframework.web.client.RestTemplate restTemplate; // Keep purely to satisfy context if needed,
+                                                                          // though likely unused now
 
-    @MockBean
-    private com.tradeoption.repository.RocksDBRepository rocksDBRepository;
+        @MockBean
+        private com.tradeoption.repository.RocksDBRepository rocksDBRepository;
 
-    @Autowired
-    private McxApiServiceImpl mcxApiService;
+        @Autowired
+        private McxApiServiceImpl mcxApiService;
 
-    @Value("${mcx.api.base-url}")
-    private String baseUrl;
+        @Value("${mcx.api.base-url:https://www.mcxindia.com}")
+        private String baseUrl;
 
-    private MockRestServiceServer mockServer;
+        @org.mockito.Mock
+        private org.apache.hc.client5.http.impl.classic.CloseableHttpClient mockHttpClient;
 
-    @BeforeEach
-    public void init() {
-        mockServer = MockRestServiceServer.createServer(mcxRestTemplate);
-    }
+        @org.mockito.Mock
+        private org.apache.hc.client5.http.impl.classic.CloseableHttpResponse mockResponse;
 
-    @Test
-    public void testGetOptionChain() {
-        String commodity = "GOLD";
-        String expiry = "2023-12-05";
-        String expectedResponse = "{\"data\": \"mock data\"}";
+        @org.mockito.Mock
+        private org.apache.hc.core5.http.HttpEntity mockEntity;
 
-        mockServer.expect(requestTo(containsString("/market-data/option-chain")))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(expectedResponse, MediaType.APPLICATION_JSON));
+        @BeforeEach
+        public void init() throws Exception {
+                org.mockito.MockitoAnnotations.openMocks(this);
 
-        String result = mcxApiService.getOptionChain(commodity, expiry);
-        assertEquals(expectedResponse, result);
-        mockServer.verify();
-    }
+                // Inject mock factory
+                mcxApiService.setClientFactory(() -> mockHttpClient);
+
+                // Re-initialize to pick up the mock client
+                mcxApiService.init();
+        }
+
+        @Test
+        public void testGetOptionChain() throws Exception {
+                String commodity = "GOLD";
+                String expiry = "2023-12-05";
+                String expectedResponse = "{\"data\": \"mock data\"}";
+
+                // Mock Entity
+                // Mock Entity: Need stream for each call (403 body, then 200 body)
+                org.mockito.Mockito.when(mockEntity.getContent())
+                                .thenReturn(new java.io.ByteArrayInputStream("Access Denied".getBytes())) // 1st call
+                                                                                                          // (403)
+                                .thenReturn(new java.io.ByteArrayInputStream(expectedResponse.getBytes())); // 2nd call
+                                                                                                            // (200)
+
+                org.mockito.Mockito.when(mockResponse.getEntity()).thenReturn(mockEntity);
+
+                // Mock Status: 403 then 200
+                org.mockito.Mockito.when(mockResponse.getCode())
+                                .thenReturn(403)
+                                .thenReturn(200);
+
+                // Mock Execute for Warmup (GET) and Data (POST)
+                // Since we are using a callback, we need to invoke it.
+
+                // Match GET requests (Warmup)
+                // Use raw class matching to avoid ambiguity with overloaded methods
+                org.mockito.Mockito.when(mockHttpClient.execute(
+                                org.mockito.ArgumentMatchers
+                                                .any(org.apache.hc.client5.http.classic.methods.HttpGet.class),
+                                org.mockito.ArgumentMatchers
+                                                .any(org.apache.hc.core5.http.io.HttpClientResponseHandler.class)))
+                                .thenReturn(null); // Warmup discards response
+
+                // Match POST requests (Data)
+                org.mockito.Mockito.when(mockHttpClient.execute(
+                                org.mockito.ArgumentMatchers
+                                                .any(org.apache.hc.client5.http.classic.methods.HttpPost.class),
+                                org.mockito.ArgumentMatchers
+                                                .any(org.apache.hc.core5.http.io.HttpClientResponseHandler.class)))
+                                .thenAnswer(invocation -> {
+                                        org.apache.hc.core5.http.io.HttpClientResponseHandler<String> handler = invocation
+                                                        .getArgument(1);
+                                        return handler.handleResponse(mockResponse);
+                                });
+
+                String result = mcxApiService.getOptionChain(commodity, expiry);
+                assertEquals(expectedResponse, result);
+
+                // Verify flow
+                // Should have called GET twice (warmup) and POST twice (1 fail, 1 success)
+                org.mockito.Mockito.verify(mockHttpClient, org.mockito.Mockito.atLeast(2)).execute(
+                                org.mockito.ArgumentMatchers
+                                                .any(org.apache.hc.client5.http.classic.methods.HttpGet.class),
+                                org.mockito.ArgumentMatchers
+                                                .any(org.apache.hc.core5.http.io.HttpClientResponseHandler.class));
+                org.mockito.Mockito.verify(mockHttpClient, org.mockito.Mockito.times(2)).execute(
+                                org.mockito.ArgumentMatchers
+                                                .any(org.apache.hc.client5.http.classic.methods.HttpPost.class),
+                                org.mockito.ArgumentMatchers
+                                                .any(org.apache.hc.core5.http.io.HttpClientResponseHandler.class));
+        }
 }

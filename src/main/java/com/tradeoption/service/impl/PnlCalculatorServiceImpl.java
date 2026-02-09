@@ -31,7 +31,7 @@ public class PnlCalculatorServiceImpl implements PnlCalculatorService {
             pnl = leg.getEntryPrice() - intrinsicValue;
         }
 
-        return pnl * leg.getQuantity();
+        return pnl * Math.abs(leg.getQuantity());
     }
 
     @Override
@@ -59,10 +59,10 @@ public class PnlCalculatorServiceImpl implements PnlCalculatorService {
                 double pnl = 0;
                 if (leg.getAction() == TradeAction.BUY) {
                     // Long: PNL = (Current Price - Entry Price) * Quantity
-                    pnl = (ltp - leg.getEntryPrice()) * leg.getQuantity();
+                    pnl = (ltp - leg.getEntryPrice()) * Math.abs(leg.getQuantity());
                 } else {
                     // Short: PNL = (Entry Price - Current Price) * Quantity
-                    pnl = (leg.getEntryPrice() - ltp) * leg.getQuantity();
+                    pnl = (leg.getEntryPrice() - ltp) * Math.abs(leg.getQuantity());
                 }
                 totalPnl += pnl;
             }

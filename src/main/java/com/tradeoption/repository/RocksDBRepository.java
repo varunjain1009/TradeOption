@@ -22,12 +22,8 @@ public class RocksDBRepository {
     private RocksDB db;
     private final ObjectMapper objectMapper;
 
-    @org.springframework.beans.factory.annotation.Autowired
-    public RocksDBRepository(ObjectMapper objectMapper) {
-        this(objectMapper, "trade-option-db");
-    }
-
-    public RocksDBRepository(ObjectMapper objectMapper, String dbFile) {
+    public RocksDBRepository(ObjectMapper objectMapper,
+            @org.springframework.beans.factory.annotation.Value("${app.db.path:trade-option-db}") String dbFile) {
         this.objectMapper = objectMapper;
         this.dbFile = dbFile;
     }

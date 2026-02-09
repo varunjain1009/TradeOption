@@ -3,57 +3,243 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>TradeOption Dashboard</title>
     <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #aaaaaa;
+            --accent-blue: #64b5f6;
+            --accent-green: #4caf50;
+            --accent-red: #f44336;
+            --border-color: #333333;
+
+            /* Neon Colors - Very Subtle */
+            --neon-blue: rgba(0, 243, 255, 0.7);
+            --neon-pink: rgba(188, 19, 254, 0.7);
+            --neon-green: #0aff0a;
+            --glass-bg: rgba(30, 30, 30, 0.6);
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e1e;
-            color: #e0e0e0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
             margin: 0;
             padding: 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        /* Pulsating Page Border Glow */
+        @keyframes pulsate-glow {
+
+            0%,
+            100% {
+                box-shadow:
+                    inset 0 0 20px rgba(0, 191, 255, 0.4),
+                    inset 0 0 40px rgba(0, 191, 255, 0.2),
+                    0 0 20px rgba(0, 191, 255, 0.3);
+            }
+
+            50% {
+                box-shadow:
+                    inset 0 0 30px rgba(0, 191, 255, 0.6),
+                    inset 0 0 60px rgba(0, 191, 255, 0.4),
+                    0 0 40px rgba(0, 191, 255, 0.5);
+            }
+        }
+
+        body {
+            border: 2px solid var(--accent-blue);
+            animation: pulsate-glow 3s ease-in-out infinite;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        /* Pulse animation disabled */
+        @keyframes pulse {
+            0% {
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+
+            100% {
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+        }
+
+
 
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: 2fr 1fr;
             gap: 20px;
         }
 
         .card {
-            background-color: #2d2d2d;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            background-color: var(--bg-card);
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
         }
 
         .card-header {
-            font-size: 1.2em;
-            border-bottom: 1px solid #444;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-            color: #64b5f6;
-        }
-
-        .metric-row {
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            align-items: center;
         }
 
-        .metric-label {
-            color: #aaa;
+        .card-body {
+            padding: 15px;
+            flex-grow: 1;
         }
 
-        .metric-value {
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 8px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: normal;
+        }
+
+        td {
+            padding: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .badge {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.75rem;
             font-weight: bold;
         }
 
+        .badge-buy {
+            background: rgba(76, 175, 80, 0.2);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        .badge-sell {
+            background: rgba(244, 67, 54, 0.2);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
+        /* Metrics */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+        }
+
         .positive {
-            color: #4caf50;
+            color: var(--accent-green);
         }
 
         .negative {
-            color: #f44336;
+            color: var(--accent-red);
+        }
+
+        /* Inputs */
+        select,
+        input {
+            background: #252525;
+            color: white;
+            border: 1px solid #444;
+            padding: 6px;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0066cc, #0099ff);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #444;
+            color: #fff;
+        }
+
+        /* Chart */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
         }
 
         #connection-status {
@@ -61,142 +247,227 @@
             bottom: 10px;
             right: 10px;
             font-size: 0.8em;
-            color: #777;
-        }
-
-        canvas {
-            width: 100%;
-            height: 300px;
-            background: #252525;
-            border-radius: 4px;
+            color: #555;
         }
     </style>
-    <!-- Using CDN for simplicity as per plan -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Replaced Chart.js with Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 
 <body>
 
-    <h1 style="color: #64b5f6;">TradeOption Analytics</h1>
+    <div class="header neon-border"
+        style="padding: 15px; border-radius: 8px; margin-bottom: 25px; background: rgba(0,0,0,0.2);">
+        <h1>
+            <a href="/" style="text-decoration: none; color: inherit; display: inline-block;"
+                class="neon-text">TradeOption Analytics</a>
+            <span
+                style="font-size: 0.6em; color: var(--accent-green); vertical-align: middle; border: 1px solid var(--accent-green); padding: 2px 6px; border-radius: 4px; text-shadow: none;">v3.6.0
+                [PORT 8082]</span>
+        </h1>
+        <div>
+            <span style="color: var(--text-muted); margin-right: 10px;">Spot Price: <span id="spot-price"
+                    style="color: white; font-weight: bold;">--</span></span>
+            <span style="color: var(--text-muted);">IV: <span id="volatility"
+                    style="color: white; font-weight: bold;">--</span></span>
+            <a href="/logout"
+                style="margin-left: 15px; color: var(--accent-red); text-decoration: none; font-size: 0.9em; border: 1px solid var(--accent-red); padding: 2px 6px; border-radius: 4px;">Logout</a>
+        </div>
+    </div>
+
+    <!-- Market Status Banner -->
+    <div id="market-status-banner"
+        style="display:none; background-color: rgba(244, 67, 54, 0.2); border: 1px solid var(--accent-red); color: white; text-align: center; padding: 10px; margin-bottom: 20px; border-radius: 6px;">
+        <span style="font-weight: bold; color: var(--accent-red);">MARKET CLOSED:</span> <span
+            id="market-status-reason"></span>
+    </div>
+
+    <!-- Top Controls -->
+    <div style="margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <select id="symbol" style="width: 150px;"></select>
+        <select id="expiry" style="width: 150px;"></select>
+
+        <button class="btn-primary" onclick="suggestStraddle()">Suggest Straddle</button>
+        <button class="btn-primary" onclick="suggestStrangle()">Suggest Strangle</button>
+        <button class="btn-secondary" onclick="resetStrategy()">Reset</button>
+
+        <div style="border-left: 1px solid #444; padding-left: 15px; display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="strategy-name" placeholder="Strategy Name" style="width: 200px;">
+            <button class="btn-success" onclick="saveStrategy()">Save Strategy</button>
+            <button class="btn-secondary" onclick="toggleSavedStrategies()">Load Saved</button>
+        </div>
+    </div>
+
+    <!-- Saved Strategies Panel -->
+    <div id="saved-strategies-panel" class="card-neon"
+        style="display: none; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <h3 style="margin: 0;" class="neon-text">Trade Manager</h3>
+
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="date" id="filter-start-date"
+                    style="background: #333; border: 1px solid #555; color: white; padding: 4px; border-radius: 4px;"
+                    onchange="loadSavedStrategies()">
+                <span style="color: #aaa;">to</span>
+                <input type="date" id="filter-end-date"
+                    style="background: #333; border: 1px solid #555; color: white; padding: 4px; border-radius: 4px;"
+                    onchange="loadSavedStrategies()">
+            </div>
+
+            <div style="display: flex; gap: 5px;">
+                <button class="btn-secondary" id="filter-active" onclick="filterStrategies('ACTIVE')"
+                    style="background: var(--accent-blue); color: white;">Active</button>
+                <button class="btn-secondary" id="filter-closed" onclick="filterStrategies('CLOSED')">Closed</button>
+            </div>
+        </div>
+
+        <div id="pnl-chart" style="width: 100%; height: 200px; margin-bottom: 20px;"></div>
+
+        <div id="saved-strategies-list"
+            style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;">
+            <!-- Populated by JS -->
+        </div>
+        <button class="btn-secondary" style="margin-top: 15px;" onclick="toggleSavedStrategies()">Close Panel</button>
+    </div>
 
     <div class="grid-container">
-        <!-- Strategy Builder -->
-        <div class="card" style="grid-column: span 3;">
-            <div class="card-header">Strategy Builder</div>
-            <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px;">
-                <label>Symbol:
-                    <select id="symbol" style="padding: 5px; background: #333; color: white; border: 1px solid #555;">
-                        <!-- Dynamically populated -->
-                    </select>
-                </label>
-                <label>Expiry:
-                    <select id="expiry" style="padding: 5px; background: #333; color: white; border: 1px solid #555;">
-                        <!-- Dynamically populated -->
-                    </select>
-                </label>
+
+        <!-- Left Column: Payoff Chart & Positions -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+
+            <!-- Payoff Chart -->
+            <div class="card card-neon">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="neon-text" style="font-size: 1.1em;">Payoff Graph</span>
+                    <button id="refresh-btn" onclick="analyzeStrategyManual()"
+                        style="background: var(--accent-blue); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; box-shadow: 0 0 5px var(--neon-blue);">
+                        Refresh Analysis
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <div id="payoffChart" style="width:100%; height:100%;"></div>
+                    </div>
+                </div>
             </div>
 
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                <thead>
-                    <tr style="text-align: left; border-bottom: 1px solid #444;">
-                        <th style="padding: 10px;">Type</th>
-                        <th style="padding: 10px;">Action</th>
-                        <th style="padding: 10px;">Strike</th>
-                        <th style="padding: 10px;">Quantity</th>
-                        <th style="padding: 10px;"></th>
-                    </tr>
-                </thead>
-                <tbody id="legs-body">
-                    <!-- Legs will be added here -->
-                </tbody>
-            </table>
-
-            <div style="margin-bottom: 20px;">
-                <button onclick="addLeg()"
-                    style="padding: 8px 16px; background: #4caf50; color: white; border: none; cursor: pointer; margin-right: 10px;">+
-                    Add Leg</button>
-                <button onclick="submitStrategy()"
-                    style="padding: 8px 16px; background: #2196f3; color: white; border: none; cursor: pointer;">Analyze
-                    Strategy</button>
-                <button onclick="suggestStraddle()"
-                    style="padding: 8px 16px; background: #9c27b0; color: white; border: none; cursor: pointer; margin-left: 10px;">Suggest
-                    Straddle</button>
-                <button onclick="suggestStrangle()"
-                    style="padding: 8px 16px; background: #e91e63; color: white; border: none; cursor: pointer; margin-left: 10px;">Suggest
-                    Strangle</button>
+            <!-- Positions Table -->
+            <div class="card card-neon">
+                <div class="card-header">
+                    <span class="neon-text" style="font-size: 1.1em;">Strategy Positions</span>
+                    <button class="btn-success" style="font-size: 0.8rem;" onclick="addLeg()">+ Add Leg</button>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <table id="positions-table">
+                        <thead>
+                            <tr>
+                                <th></th> <!-- Checkbox -->
+                                <th>Type</th>
+                                <th>Action</th>
+                                <th>Strike</th>
+                                <th>Expiry</th>
+                                <th style="text-align: right;">Entry Price</th>
+                                <th style="text-align: right;">Exit Price</th>
+                                <th style="text-align: right;">Lots</th>
+                                <th></th> <!-- Actions -->
+                            </tr>
+                        </thead>
+                        <tbody id="legs-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- Market Data -->
-        <div class="card">
-            <div class="card-header">Market Data (NIFTY)</div>
-            <div class="metric-row">
-                <span class="metric-label">Spot Price</span>
-                <span class="metric-value" id="spot-price">--</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">Volatility (IV)</span>
-                <span class="metric-value" id="volatility">--</span>
-            </div>
-        </div>
+        <!-- Right Column: Analytics Summary -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
 
-        <!-- Strategy Metrics -->
-        <div class="card">
-            <div class="card-header">Strategy Performance</div>
-            <div class="metric-row">
-                <span class="metric-label">Total PNL</span>
-                <span class="metric-value" id="pnl">--</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">Max Profit</span>
-                <span class="metric-value" id="max-profit">--</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">Max Loss</span>
-                <span class="metric-value" id="max-loss">--</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">PoP</span>
-                <span class="metric-value" id="pop">--</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">Risk/Reward</span>
-                <span class="metric-value" id="risk-reward">--</span>
-            </div>
-        </div>
+            <!-- Summary Stats -->
+            <div class="card card-neon">
+                <div class="card-header"><span class="neon-text" style="font-size: 1.1em;">Strategy Summary</span></div>
+                <div class="card-body">
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <span class="metric-label">Prob. of Profit</span>
+                            <span id="pop" style="font-weight: bold;">--</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Max Profit</span>
+                            <span id="max-profit" class="positive">--</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Max Loss</span>
+                            <span id="max-loss" class="negative">--</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Max RR Ratio</span>
+                            <span id="risk-reward">--</span>
+                        </div>
+                        <div class="metric-item" style="grid-column: span 2;">
+                            <span class="metric-label">Breakevens</span>
+                            <span id="breakevens" style="float: right;">--</span>
+                        </div>
+                        <div class="metric-item" style="grid-column: span 2;">
+                            <span class="metric-label">Net Credit</span>
+                            <span id="net-credit" style="float: right;">--</span>
+                        </div>
+                    </div>
 
-        <!-- Greeks -->
-        <div class="card">
-            <div class="card-header">Strategy Greeks</div>
-            <div class="metric-row">
-                <span class="metric-label">Delta</span>
-                <span class="metric-value" id="delta">--</span>
+                    <div id="pnl-container"
+                        style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #333; display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="metric-label" style="font-size: 1.1em;">Total PNL</span>
+                            <span id="pnl" style="font-size: 1.2em; font-weight: bold;">--</span>
+                        </div>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                            <span class="metric-label">Current PNL</span>
+                            <span id="current-pnl" style="font-weight: bold;">--</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <button class="btn-primary" style="width: 100%;" onclick="submitStrategy()">Analyze
+                            Strategy</button>
+                    </div>
+                </div>
             </div>
-            <div class="metric-row">
-                <span class="metric-label">Gamma</span>
-                <span class="metric-value" id="gamma">--</span>
+
+            <!-- Greeks -->
+            <div class="card card-neon">
+                <div class="card-header"><span class="neon-text" style="font-size: 1.1em;">Combined Greeks</span></div>
+                <div class="card-body">
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <span class="metric-label">Delta</span>
+                            <span id="delta">--</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Gamma</span>
+                            <span id="gamma">--</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Theta</span>
+                            <span id="theta">--</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Vega</span>
+                            <span id="vega">--</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="metric-row">
-                <span class="metric-label">Theta</span>
-                <span class="metric-value" id="theta">--</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">Vega</span>
-                <span class="metric-value" id="vega">--</span>
-            </div>
+
         </div>
     </div>
 
-    <div style="margin-top: 20px;" class="card">
-        <div class="card-header">Payoff Graph (Live)</div>
-        <canvas id="payoffChart"></canvas>
-    </div>
+    <div id="connection-status">Connecting...</div>
 
-    <div id="connection-status">Disconnected</div>
-
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=3.6"></script>
 </body>
 
 </html>

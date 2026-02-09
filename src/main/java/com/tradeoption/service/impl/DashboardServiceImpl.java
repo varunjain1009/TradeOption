@@ -50,7 +50,19 @@ public class DashboardServiceImpl implements DashboardService {
             riskReward = maxProfit / Math.abs(maxLoss);
         }
 
-        return new DashboardMetrics(
+        return createMetrics(
+                greeks,
+                currentPnl,
+                maxProfit,
+                maxLoss,
+                pop,
+                riskReward,
+                strategy);
+    }
+
+    private DashboardMetrics createMetrics(Greeks greeks, double currentPnl, double maxProfit, double maxLoss,
+            double pop, double riskReward, Strategy strategy) {
+        DashboardMetrics metrics = new DashboardMetrics(
                 greeks,
                 currentPnl,
                 maxProfit,
@@ -58,6 +70,14 @@ public class DashboardServiceImpl implements DashboardService {
                 pop,
                 riskReward,
                 System.currentTimeMillis());
+
+        if ("CLOSED".equalsIgnoreCase(strategy.getStatus())) {
+            metrics.setClosed(true);
+            if (strategy.getRealizedPnl() != null) {
+                metrics.setCurrentPnl(strategy.getRealizedPnl()); // Use realized as current for display if closed
+            }
+        }
+        return metrics;
     }
 
     private double calculateTZeroPnl(Strategy strategy, double spot, double vol, double t, double r) {
@@ -66,30 +86,34 @@ public class DashboardServiceImpl implements DashboardService {
             boolean isCall = leg.getType() == com.tradeoption.domain.LegType.CE;
             double legPrice = blackScholesService.calculateOptionPrice(spot, leg.getStrikePrice(), t, vol, r, isCall);
 
-            if (leg.getAction() == com.tradeoption.domain.TradeAction.BUY) {
-                theoreticalValue += (legPrice * leg.getQuantity());
-            } else {
-                theoreticalValue -= (legPrice * leg.getQuantity());
-            }
+            // Quantity is signed (positive for BUY, negative for SELL)
+            // Value = Price * Quantity
+            theoreticalValue += (legPrice * leg.getQuantity());
         }
 
         double netEntryCost = 0.0;
         for (com.tradeoption.domain.OptionLeg leg : strategy.getLegs()) {
-            if (leg.getAction() == com.tradeoption.domain.TradeAction.BUY) {
-                netEntryCost += (leg.getEntryPrice() * leg.getQuantity());
-            } else {
-                netEntryCost -= (leg.getEntryPrice() * leg.getQuantity());
-            }
+            // Cost = Entry * Quantity
+            netEntryCost += (leg.getEntryPrice() * leg.getQuantity());
         }
 
+        // PNL = Current Value - Cost Basis
+        // Example Long: Value(100) - Cost(90) = 10.
+        // Example Short: Value(-100) - Cost(-90) = -10. (Loss if Price > Entry)
         return theoreticalValue - netEntryCost;
     }
 
     private double[] calculateMaxMinPnl(Strategy strategy, double currentSpot) {
-        // Scan logic: +/- 50% range, 200 points
-        double range = 0.50;
-        double minSpot = currentSpot * (1 - range);
-        double maxSpot = currentSpot * (1 + range);
+        // 1. Determine Range (Include Spot AND all Strikes)
+        double minStrike = strategy.getLegs().stream().mapToDouble(com.tradeoption.domain.OptionLeg::getStrikePrice)
+                .min().orElse(currentSpot);
+        double maxStrike = strategy.getLegs().stream().mapToDouble(com.tradeoption.domain.OptionLeg::getStrikePrice)
+                .max().orElse(currentSpot);
+
+        // Use a wide buffer to capture tails
+        double minSpot = Math.min(currentSpot * 0.5, minStrike * 0.8);
+        double maxSpot = Math.max(currentSpot * 1.5, maxStrike * 1.2);
+
         int steps = 200;
         double stepSize = (maxSpot - minSpot) / steps;
 

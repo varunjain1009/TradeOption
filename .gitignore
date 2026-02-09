@@ -152,3 +152,6 @@ jacoco.exec
 ############################################
 trade-option-db-test-*
 trade-option-db/
+
+
+test_output.txt

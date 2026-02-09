@@ -30,22 +30,37 @@ public class StrategySuggestionServiceImplTest {
     @Mock
     private StrategyValidationService strategyValidationService;
 
+    @Mock
+    private com.tradeoption.service.DashboardService dashboardService;
+
     private StrategySuggestionServiceImpl strategySuggestionService;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         strategySuggestionService = new StrategySuggestionServiceImpl(marketDataService, systemConfigService,
-                strategyValidationService);
+                strategyValidationService, dashboardService);
 
         // Default valid spread
         when(strategyValidationService.isSpreadValid(anyString(), anyDouble(), anyString())).thenReturn(true);
         when(systemConfigService.getConfig()).thenReturn(new SystemConfig());
+
+        // Default Metrics
+        com.tradeoption.domain.DashboardMetrics defaultMetrics = new com.tradeoption.domain.DashboardMetrics(
+                new com.tradeoption.domain.Greeks(0.0, 0.0, 0.0, 0.0, 0.0), 0.0, 1000.0, -1000.0, 0.50, 2.0,
+                System.currentTimeMillis());
+        when(dashboardService.calculateMetrics(any(), anyDouble(), anyDouble(), anyDouble(), anyDouble()))
+                .thenReturn(defaultMetrics);
+
+        // Ensure legs have valid prices so they aren't filtered out by the new
+        // zero-price check
+        when(marketDataService.getLtp(any(com.tradeoption.domain.OptionLeg.class)))
+                .thenReturn(java.util.Optional.of(100.0));
     }
 
     @Test
     public void testSuggestStraddle_Normal() {
-        when(marketDataService.getLtp("NIFTY")).thenReturn(22020.0); // Rounds to 22000
+        when(marketDataService.getLtp(anyString())).thenReturn(java.util.Optional.of(22000.0)); // Rounds to 22000
 
         Strategy strategy = strategySuggestionService.suggestStraddle("NIFTY");
 
@@ -64,7 +79,7 @@ public class StrategySuggestionServiceImplTest {
 
     @Test
     public void testSuggestStraddle_BankNifty() {
-        when(marketDataService.getLtp("BANKNIFTY")).thenReturn(48040.0); // Rounds to 48000
+        when(marketDataService.getLtp("BANKNIFTY")).thenReturn(java.util.Optional.of(48040.0)); // Rounds to 48000
 
         Strategy strategy = strategySuggestionService.suggestStraddle("BANKNIFTY");
 
@@ -79,7 +94,7 @@ public class StrategySuggestionServiceImplTest {
 
     @Test
     public void testSuggestStraddle_RetriesOnInvalidSpread() {
-        when(marketDataService.getLtp("NIFTY")).thenReturn(22000.0);
+        when(marketDataService.getLtp("NIFTY")).thenReturn(java.util.Optional.of(22000.0));
 
         // 22000 Invalid
         when(strategyValidationService.isSpreadValid(anyString(), eq(22000.0), anyString())).thenReturn(false);
@@ -92,7 +107,7 @@ public class StrategySuggestionServiceImplTest {
 
     @Test
     public void testSuggestStrangle() {
-        when(marketDataService.getLtp("NIFTY")).thenReturn(22000.0);
+        when(marketDataService.getLtp("NIFTY")).thenReturn(java.util.Optional.of(22000.0));
 
         Strategy strategy = strategySuggestionService.suggestStrangle("NIFTY");
 
@@ -114,7 +129,7 @@ public class StrategySuggestionServiceImplTest {
 
     @Test
     public void testSuggestStrangle_BankNifty() {
-        when(marketDataService.getLtp("BANKNIFTY")).thenReturn(48000.0);
+        when(marketDataService.getLtp("BANKNIFTY")).thenReturn(java.util.Optional.of(48000.0));
 
         Strategy strategy = strategySuggestionService.suggestStrangle("BANKNIFTY");
 
@@ -127,7 +142,7 @@ public class StrategySuggestionServiceImplTest {
 
     @Test
     public void testExpirySelection() {
-        when(marketDataService.getLtp("NIFTY")).thenReturn(22000.0);
+        when(marketDataService.getLtp("NIFTY")).thenReturn(java.util.Optional.of(22000.0));
 
         SystemConfig config = new SystemConfig();
         Map<String, List<String>> expiries = new HashMap<>();
@@ -141,7 +156,7 @@ public class StrategySuggestionServiceImplTest {
 
     @Test
     public void testFallbackWhenSpotIsZero() {
-        when(marketDataService.getLtp("NIFTY")).thenReturn(0.0);
+        when(marketDataService.getLtp("NIFTY")).thenReturn(java.util.Optional.empty());
 
         Strategy strategy = strategySuggestionService.suggestStraddle("NIFTY");
 

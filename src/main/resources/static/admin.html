@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>TradeOption Admin</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #e0e0e0;
+            --accent-blue: #64b5f6;
+            --accent-green: #4caf50;
+            --accent-red: #f44336;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            background: #252525;
+            color: white;
+            border: 1px solid #444;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: #000;
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #444;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1>Admin Configuration</h1>
+            <a href="/" style="color: var(--accent-blue);">Back to Dashboard</a>
+        </div>
+
+        <!-- General Config -->
+        <div class="card">
+            <h2>General Settings</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label>Refresh Interval (ms)</label>
+                    <input type="number" id="refreshInterval">
+                </div>
+                <div>
+                    <label>Risk-Free Rate (0.05 = 5%)</label>
+                    <input type="number" step="0.001" id="riskFreeRate">
+                </div>
+            </div>
+            <div style="margin-top: 15px; display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="enableMockFallback" style="width: auto; margin-bottom: 0;">
+                <label for="enableMockFallback" style="margin-bottom: 0; cursor: pointer;">Enable Mock Data Fallback (if
+                    API fails)</label>
+            </div>
+            <button class="btn-primary" onclick="saveGeneralConfig()">Save Changes</button>
+        </div>
+
+        <!-- Holidays -->
+        <div class="card">
+            <h2>Holidays</h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="date" id="newHolidayDate" style="margin-bottom: 0;">
+                <button class="btn-primary" onclick="addHoliday()">Add Holiday</button>
+            </div>
+            <table id="holidaysTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Special Sessions -->
+        <div class="card">
+            <h2>Special Sessions</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <input type="date" id="ssDate">
+                <input type="time" id="ssStart">
+                <input type="time" id="ssEnd">
+            </div>
+            <input type="text" id="ssReason" placeholder="Reason (e.g., Mahurat Trading)" style="margin-bottom: 10px;">
+            <button class="btn-primary" onclick="addSpecialSession()">Add Special Session</button>
+
+            <table id="sessionsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Reason</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let fullConfig = {};
+
+        function loadConfig() {
+            fetch('/api/admin/config')
+                .then(res => res.json())
+                .then(config => {
+                    fullConfig = config;
+                    renderConfig();
+                });
+        }
+
+        function renderConfig() {
+            document.getElementById('refreshInterval').value = fullConfig.refreshIntervalMs;
+            document.getElementById('riskFreeRate').value = fullConfig.riskFreeRate;
+            document.getElementById('enableMockFallback').checked = fullConfig.enableMockFallback;
+
+            // Holidays
+            const holidaysBody = document.querySelector('#holidaysTable tbody');
+            holidaysBody.innerHTML = '';
+            (fullConfig.holidays || []).forEach(date => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${date}</td><td><button class="btn-danger" onclick="removeHoliday('${date}')">Remove</button></td>`;
+                holidaysBody.appendChild(tr);
+            });
+
+            // Special Sessions
+            const sessionsBody = document.querySelector('#sessionsTable tbody');
+            sessionsBody.innerHTML = '';
+            (fullConfig.specialSessions || []).forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${s.date}</td>
+                    <td>${s.startTime} - ${s.endTime}</td>
+                    <td>${s.reason}</td>
+                    <td><button class="btn-danger" onclick="removeSession('${s.date}')">Remove</button></td>
+                `;
+                sessionsBody.appendChild(tr);
+            });
+        }
+
+        function saveGeneralConfig() {
+            fullConfig.refreshIntervalMs = parseInt(document.getElementById('refreshInterval').value);
+            fullConfig.riskFreeRate = parseFloat(document.getElementById('riskFreeRate').value);
+            fullConfig.enableMockFallback = document.getElementById('enableMockFallback').checked;
+            pushConfig();
+        }
+
+        function addHoliday() {
+            const date = document.getElementById('newHolidayDate').value;
+            if (!date) return;
+            if (!fullConfig.holidays) fullConfig.holidays = [];
+            if (!fullConfig.holidays.includes(date)) {
+                fullConfig.holidays.push(date);
+                fullConfig.holidays.sort();
+                pushConfig();
+            }
+        }
+
+        function removeHoliday(date) {
+            fullConfig.holidays = fullConfig.holidays.filter(d => d !== date);
+            pushConfig();
+        }
+
+        function addSpecialSession() {
+            const date = document.getElementById('ssDate').value;
+            const start = document.getElementById('ssStart').value;
+            const end = document.getElementById('ssEnd').value;
+            const reason = document.getElementById('ssReason').value;
+
+            if (!date || !start || !end) return;
+
+            if (!fullConfig.specialSessions) fullConfig.specialSessions = [];
+            fullConfig.specialSessions.push({
+                date: date,
+                startTime: start,
+                endTime: end,
+                reason: reason
+            });
+            pushConfig();
+        }
+
+        function removeSession(date) {
+            fullConfig.specialSessions = fullConfig.specialSessions.filter(s => s.date !== date);
+            pushConfig();
+        }
+
+        function pushConfig() {
+            fetch('/api/admin/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(fullConfig)
+            })
+                .then(res => {
+                    if (res.ok) {
+                        alert('Configuration saved!');
+                        loadConfig();
+                    } else {
+                        alert('Error saving config');
+                    }
+                });
+        }
+
+        loadConfig();
+    </script>
+</body>
+
+</html>

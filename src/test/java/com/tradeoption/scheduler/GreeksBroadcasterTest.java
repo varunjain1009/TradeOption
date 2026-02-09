@@ -3,7 +3,9 @@ package com.tradeoption.scheduler;
 import com.tradeoption.domain.LegType;
 import com.tradeoption.domain.OptionLeg;
 import com.tradeoption.domain.Strategy;
+import com.tradeoption.domain.Strategy;
 import com.tradeoption.domain.TradeAction;
+import com.tradeoption.service.MarketDataService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,6 +16,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 public class GreeksBroadcasterTest {
@@ -27,11 +30,17 @@ public class GreeksBroadcasterTest {
     @MockBean
     private com.tradeoption.repository.RocksDBRepository rocksDBRepository;
 
+    @MockBean
+    private MarketDataService marketDataService;
+
     @Test
     public void testBroadcastGreeks() {
+        // Setup Market Data Mock
+        when(marketDataService.getLtp(any(String.class))).thenReturn(java.util.Optional.of(22000.0));
+
         // Setup Strategy
         Strategy strategy = new Strategy();
-        strategy.addLeg(new OptionLeg(100, LegType.CE, TradeAction.BUY, 10, 1, "28MAR2024"));
+        strategy.addLeg(new OptionLeg(100, LegType.CE, TradeAction.BUY, 10, 1, "28MAR2024", "NIFTY"));
 
         broadcaster.addStrategy(strategy);
 

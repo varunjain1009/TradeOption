@@ -7,6 +7,7 @@ public class DashboardMetrics {
     private double maxLoss;
     private double probabilityOfProfit;
     private double riskRewardRatio;
+    private java.util.List<Double> legLtps;
     private long timestamp;
 
     public DashboardMetrics() {
@@ -14,13 +15,27 @@ public class DashboardMetrics {
 
     public DashboardMetrics(Greeks greeks, double currentPnl, double maxProfit, double maxLoss,
             double probabilityOfProfit, double riskRewardRatio, long timestamp) {
+        this(greeks, currentPnl, maxProfit, maxLoss, probabilityOfProfit, riskRewardRatio, null, timestamp);
+    }
+
+    public DashboardMetrics(Greeks greeks, double currentPnl, double maxProfit, double maxLoss,
+            double probabilityOfProfit, double riskRewardRatio, java.util.List<Double> legLtps, long timestamp) {
         this.greeks = greeks;
         this.currentPnl = currentPnl;
         this.maxProfit = maxProfit;
         this.maxLoss = maxLoss;
         this.probabilityOfProfit = probabilityOfProfit;
         this.riskRewardRatio = riskRewardRatio;
+        this.legLtps = legLtps;
         this.timestamp = timestamp;
+    }
+
+    public java.util.List<Double> getLegLtps() {
+        return legLtps;
+    }
+
+    public void setLegLtps(java.util.List<Double> legLtps) {
+        this.legLtps = legLtps;
     }
 
     public Greeks getGreeks() {
@@ -77,5 +92,15 @@ public class DashboardMetrics {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    private boolean isClosed;
+
+    public boolean isClosed() {
+        return isClosed;
+    }
+
+    public void setClosed(boolean isClosed) {
+        this.isClosed = isClosed;
     }
 }

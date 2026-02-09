@@ -49,7 +49,10 @@ public class LivePnlScheduler {
 
             // 1. Fetch Latest Prices for all legs in the strategy
             for (OptionLeg leg : strategy.getLegs()) {
-                double ltp = marketDataService.getLtp(leg);
+                java.util.Optional<Double> ltpOpt = marketDataService.getLtp(leg.getSymbol());
+                if (ltpOpt.isEmpty())
+                    continue;
+                double ltp = ltpOpt.get();
                 ltpMap.put(leg, ltp);
             }
 

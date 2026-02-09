@@ -33,14 +33,19 @@ public class WebSocketIntegrationTest {
     @MockBean
     private com.tradeoption.repository.RocksDBRepository rocksDBRepository;
 
+    @MockBean
+    private com.tradeoption.service.MarketDataService marketDataService;
+
     @Test
     public void testMarketDataBroadcast() {
+        org.mockito.Mockito.when(marketDataService.getLtp("GOLD")).thenReturn(java.util.Optional.of(22000.0));
         marketDataBroadcaster.broadcastSpotPrice();
         verify(messagingTemplate, atLeastOnce()).convertAndSend(eq("/topic/spot"), any(MarketDataUpdate.class));
     }
 
     @Test
     public void testPnlBroadcast() {
+        org.mockito.Mockito.when(marketDataService.getLtp("NIFTY")).thenReturn(java.util.Optional.of(22000.0));
         pnlBroadcaster.broadcastPnl();
         verify(messagingTemplate, atLeastOnce()).convertAndSend(eq("/topic/pnl"), any(Double.class));
     }

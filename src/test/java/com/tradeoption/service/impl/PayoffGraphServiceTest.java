@@ -28,7 +28,7 @@ public class PayoffGraphServiceTest {
         // Assume simplified model where we buy at theoretical price or explicit entry
         // Let's set entry price to BS price approx for T=1, Vol=0.2, R=0.05
         // Price ~ 10.45
-        strategy.addLeg(new OptionLeg(100, LegType.CE, TradeAction.BUY, 10.45, 1, "28MAR2024"));
+        strategy.addLeg(new OptionLeg(100, LegType.CE, TradeAction.BUY, 10.45, 1, "28MAR2024", "NIFTY"));
 
         double spot = 100;
         double vol = 0.2;
@@ -71,5 +71,37 @@ public class PayoffGraphServiceTest {
         // positive.
         // So T-0 > Expiry generally (unless arbitrage/neg rates).
         assertTrue(t0.get(t0.size() - 1) >= expiry.get(expiry.size() - 1));
+    }
+
+    @Test
+    public void testGeneratePayoffGraph_WideRange() {
+        // Strategy with legs at 120 and 200.
+        // Spot = 150. Range 10% (135 to 165).
+        // Expectation: Graph should expand to include 120 and 200.
+
+        Strategy strategy = new Strategy();
+        strategy.addLeg(new OptionLeg(120, LegType.PE, TradeAction.BUY, 10, 1, "28MAR2024", "NIFTY"));
+        strategy.addLeg(new OptionLeg(200, LegType.CE, TradeAction.BUY, 10, 1, "28MAR2024", "NIFTY"));
+
+        double spot = 150;
+        double vol = 0.2;
+        double time = 1.0;
+        double rate = 0.05;
+        double range = 0.1; // 10% range around 150 -> [135, 165]
+
+        PayoffGraphData data = graphService.generatePayoffGraph(strategy, spot, vol, time, rate, range);
+
+        List<Double> spots = data.getSpotPrices();
+        double minGraphSpot = spots.get(0);
+        double maxGraphSpot = spots.get(spots.size() - 1);
+
+        System.out.println("Graph Range: " + minGraphSpot + " to " + maxGraphSpot);
+
+        // Assert that graph range includes the strikes (with buffer)
+        // Min strike 120 * 0.9 = 108
+        assertTrue(minGraphSpot <= 109, "Graph min spot " + minGraphSpot + " should be <= 109");
+
+        // Max strike 200 * 1.1 = 220
+        assertTrue(maxGraphSpot >= 219, "Graph max spot " + maxGraphSpot + " should be >= 219");
     }
 }

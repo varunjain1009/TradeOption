@@ -21,4 +21,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-endpoint").setAllowedOriginPatterns("*").withSockJS();
     }
+
+    @Override
+    public void configureClientInboundChannel(
+            org.springframework.messaging.simp.config.ChannelRegistration registration) {
+        registration.taskExecutor().corePoolSize(1).maxPoolSize(1).keepAliveSeconds(60);
+    }
 }

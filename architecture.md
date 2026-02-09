@@ -1,9 +1,9 @@
 # TradeOption System Architecture
 
 ## 1. High-Level Overview
-TradeOption is a desktop-based Options Analytics Platform designed for real-time risk management and strategy analysis. It follows a hybrid **Electron + Spring Boot** architecture, where:
-- **Spring Boot (Backend)**: Handles all business logic, complex calculations (Black-Scholes, Greeks), market data processing, and persistence.
-- **Electron (Frontend Wrapper)**: Provides a native desktop experience, manages the Java backend lifecycle, and renders the dashboard.
+TradeOption is a web-based Options Analytics Platform designed for real-time risk management and strategy analysis. It follows a **Single-Process Spring Boot** architecture, where:
+- **Spring Boot (Backend & Host)**: Handles all business logic, complex calculations (Black-Scholes, Greeks), market data processing, persistence, and serves the static frontend assets.
+- **Browser (Client)**: Renders the dashboard using HTML5/JS and connects to the backend via WebSockets.
 
 ## 2. Core Modules
 
@@ -33,24 +33,37 @@ The heart of the system, responsible for theoretical pricing and risk metrics.
 - **RocksDB**: Embedded Key-Value store used for high-performance, local data storage.
 - **Usage**:
     - Storing historical snapshots (`HistoricalAnalyticsStore`).
-    - Persisting strategy configurations.
-- **Why RocksDB?**: Low latency, no external database server required, perfect for a self-contained desktop app.
+    - Persisting strategy configurations and Positions.
+- **Why RocksDB?**: Low latency, no external database server required, perfect for a self-contained local app.
 
-### 2.5 Configuration Management
-- **SystemConfigService**: Loads `config.json` from the application root.
-- **Hot-Reload**: Polls for changes every 5 seconds, allowing users to tweak parameters (Risk-Free Rate, Lot Sizes) without restarting.
+### 2.5 Market Status & Scheduling
+- **MarketStatusService**: encapsulated logic to determine if the market is open. Checks:
+    - Standard Hours (09:00 - 23:45)
+    - Weekends (Closed Sun/Mon)
+    - Configurable Holidays
+    - Configurable Special Sessions
+- **Dynamic Scheduler**: `DashboardBroadcaster` uses `TaskScheduler` to adjust its refresh interval dynamically based on config and pauses updates when the market is closed.
+
+### 2.6 Configuration Management (Admin)
+- **SystemConfigService**: Loads/Saves `config.json` and notifies listeners of changes.
+- **AdminConfigController**: secure REST API for updating configuration.
+- **Admin UI**: Dedicated HTML/JS interface for managing system settings.
+
+### 2.7 Security Layer
+- **Rate Limiting**: `Bucket4j` implementation (`RateLimitFilter`) to prevent abuse (20 req/min per IP).
+- **Security Headers**: Strict CSP, X-Frame-Options, XSS-Protection enabled in `SecurityConfig`.
+- **Access Control**: `/api/admin/**` endpoints restricted to ADMIN role.
 
 ## 3. Technology Stack
 - **Backend**: Java 17, Spring Boot 3.2
-- **Frontend**: HTML5, Vanilla JS, Chart.js
-- **Desktop Wrapper**: Electron, Node.js
+- **Frontend**: HTML5, Vanilla JS, **Plotly.js** (Charting)
 - **Database**: RocksDB (Java Driver)
 - **Messaging**: Spring WebSocket (STOMP)
 
 ## 4. Deployment Structure
-The application processes are managed as follows:
-1. User runs `start.sh` / `start.bat`.
-2. Electron starts (`main.js`).
-3. Electron spawns `java -jar TradeOption.jar` as a child process.
-4. Electron window waits for Spring Boot health check (port 8080).
-5. On close, Electron ensures the Java process is terminated.
+The application runs as a standard Java process:
+1. User runs `scripts/start.sh`.
+2. Script builds/finds the JAR.
+3. Script spawns `java -jar TradeOption.jar`.
+4. Script launches the default system browser to `http://localhost:8082`.
+5. Frontend loads and establishes WebSocket connection.

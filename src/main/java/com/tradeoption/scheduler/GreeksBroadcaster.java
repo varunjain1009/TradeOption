@@ -55,9 +55,10 @@ public class GreeksBroadcaster {
             if (strategy.getLegs().isEmpty())
                 continue;
 
-            // Assume spot price from first leg's symbol (logic to be refined in full
-            // system)
-            double spot = marketDataService.getLtp(strategy.getLegs().get(0));
+            java.util.Optional<Double> spotOpt = marketDataService.getLtp(strategy.getLegs().get(0).getSymbol());
+            if (spotOpt.isEmpty())
+                continue;
+            double spot = spotOpt.get();
 
             double volatility = 0.20; // Default 20%
             double rate = 0.05; // Default 5%

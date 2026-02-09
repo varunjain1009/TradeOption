@@ -6,14 +6,19 @@ public class PayoffGraphData {
     private List<Double> spotPrices;
     private List<Double> expiryPnl;
     private List<Double> tZeroPnl;
+    private List<Double> breakevens;
+    private Double netCredit;
 
     public PayoffGraphData() {
     }
 
-    public PayoffGraphData(List<Double> spotPrices, List<Double> expiryPnl, List<Double> tZeroPnl) {
+    public PayoffGraphData(List<Double> spotPrices, List<Double> expiryPnl, List<Double> tZeroPnl,
+            List<Double> breakevens, Double netCredit) {
         this.spotPrices = spotPrices;
         this.expiryPnl = expiryPnl;
         this.tZeroPnl = tZeroPnl;
+        this.breakevens = breakevens;
+        this.netCredit = netCredit;
     }
 
     public List<Double> getSpotPrices() {
@@ -38,5 +43,21 @@ public class PayoffGraphData {
 
     public void setTZeroPnl(List<Double> tZeroPnl) {
         this.tZeroPnl = tZeroPnl;
+    }
+
+    public List<Double> getBreakevens() {
+        return breakevens;
+    }
+
+    public void setBreakevens(List<Double> breakevens) {
+        this.breakevens = breakevens;
+    }
+
+    public Double getNetCredit() {
+        return netCredit;
+    }
+
+    public void setNetCredit(Double netCredit) {
+        this.netCredit = netCredit;
     }
 }

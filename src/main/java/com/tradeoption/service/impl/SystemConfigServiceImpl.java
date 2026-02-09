@@ -44,8 +44,13 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         if (file.exists()) {
             try {
                 SystemConfig newConfig = objectMapper.readValue(file, SystemConfig.class);
+                // Simple equality check or always notify?
+                // For now, let's always notify if we successfully read, or maybe implement
+                // equals
+                // Ideally, check hash or something.
+                // Let's just notify. The consumers can debounce if needed.
                 this.currentConfig = newConfig;
-                // logger.debug("Configuration loaded from {}", CONFIG_FILE);
+                notifyListeners();
             } catch (IOException e) {
                 logger.error("Failed to load configuration from " + CONFIG_FILE, e);
             }
@@ -61,8 +66,22 @@ public class SystemConfigServiceImpl implements SystemConfigService {
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(CONFIG_FILE), config);
             this.currentConfig = config;
             logger.info("Configuration saved to {}", CONFIG_FILE);
+            notifyListeners();
         } catch (IOException e) {
             logger.error("Failed to save configuration to " + CONFIG_FILE, e);
+        }
+    }
+
+    private final java.util.List<java.util.function.Consumer<SystemConfig>> listeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    @Override
+    public void addListener(java.util.function.Consumer<SystemConfig> listener) {
+        listeners.add(listener);
+    }
+
+    private void notifyListeners() {
+        for (java.util.function.Consumer<SystemConfig> listener : listeners) {
+            listener.accept(currentConfig);
         }
     }
 }

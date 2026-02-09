@@ -8,4 +8,6 @@ public interface SystemConfigService {
     void reloadConfig();
 
     void saveConfig(SystemConfig config);
+
+    void addListener(java.util.function.Consumer<SystemConfig> listener);
 }
