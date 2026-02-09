@@ -83,6 +83,7 @@ rocksdb/
 *.ldb
 *.manifest
 *.wal
+trade-option-db/
 
 ############################################
 # FILE-BASED DB / RUNTIME DATA
@@ -146,3 +147,8 @@ jacoco.exec
 !db/instruments.json
 !db/expiries.json
 
+############################################
+# DB files
+############################################
+trade-option-db-test-*
+trade-option-db/
